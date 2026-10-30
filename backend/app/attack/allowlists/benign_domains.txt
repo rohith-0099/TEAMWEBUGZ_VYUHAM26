@@ -1,0 +1,8 @@
+# STUB — owner: Backend Core. See team/03_BACKEND_CORE.md Step 4 (extend to ~80 entries).
+# Subdomains of allowlisted parents are also filtered (keeps the rule simple).
+microsoft.com
+windows.com
+google.com
+github.com
+cisa.gov
+mitre.org
