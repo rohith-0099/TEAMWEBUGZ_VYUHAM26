@@ -1,0 +1,1 @@
+export { IocTable } from "./IocTable";
