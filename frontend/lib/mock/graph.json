@@ -1,1 +1,211 @@
-{"nodes":[{"id":"report:mock-report","type":"report","label":"ObsidianLock Ransomware Intrusion Targeting Regional Hospitals","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:domain:invoice-portal-secure.example","type":"ioc","label":"invoice-portal-secure[.]example","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:email:billing@invoice-portal-secure.example","type":"ioc","label":"billing[@]invoice-portal-secure[.]example","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:cve:CVE-2023-27350","type":"ioc","label":"CVE-2023-27350","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:sha256:9f2c1e7ab4d05c3e8f61a2b7c4d9e0f13a5b6c7d8e9f00112233445566778899","type":"ioc","label":"9f2c1e7ab4d05c3e8f61a2b7c4d9e0f13a5b6c7d8e9f00112233445566778899","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:registry:HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run","type":"ioc","label":"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:url:https://cdn-sync-update.example/gate.php","type":"ioc","label":"hxxps://cdn-sync-update[.]example/gate.php","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:ipv4:198.51.100.23","type":"ioc","label":"198[.]51[.]100[.]23","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"ioc:ipv4:203.0.113.80","type":"ioc","label":"203[.]0[.]113[.]80","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1566.001","type":"technique","label":"Spearphishing Attachment","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1059.001","type":"technique","label":"PowerShell","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1547.001","type":"technique","label":"Registry Run Keys / Startup Folder","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1003.001","type":"technique","label":"LSASS Memory","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1021.001","type":"technique","label":"Remote Desktop Protocol","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1071.001","type":"technique","label":"Web Protocols","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1041","type":"technique","label":"Exfiltration Over C2 Channel","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1},{"id":"technique:T1486","type":"technique","label":"Data Encrypted for Impact","first_seen":"2026-10-01T00:00:00+00:00","last_seen":"2026-10-01T00:00:00+00:00","report_count":1}],"edges":[{"id":"e-1","source":"ioc:domain:invoice-portal-secure.example","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-2","source":"ioc:email:billing@invoice-portal-secure.example","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-3","source":"ioc:cve:CVE-2023-27350","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-4","source":"ioc:sha256:9f2c1e7ab4d05c3e8f61a2b7c4d9e0f13a5b6c7d8e9f00112233445566778899","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-5","source":"ioc:registry:HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-6","source":"ioc:url:https://cdn-sync-update.example/gate.php","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-7","source":"ioc:ipv4:198.51.100.23","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-8","source":"ioc:ipv4:203.0.113.80","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-9","source":"technique:T1566.001","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-10","source":"technique:T1059.001","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-11","source":"technique:T1547.001","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-12","source":"technique:T1003.001","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-13","source":"technique:T1021.001","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-14","source":"technique:T1071.001","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-15","source":"technique:T1041","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"},{"id":"e-16","source":"technique:T1486","target":"report:mock-report","relation":"mentioned_in","valid_from":"2026-10-01T00:00:00+00:00","valid_to":null,"report_id":"mock-report"}],"alerts":[{"type":"contradiction","entity_type":"ioc","entity_key":"ipv4:198.51.100.23","entity_display":"198[.]51[.]100[.]23","message":"Conflicting claims: 198[.]51[.]100[.]23 is described as c2 here and as victim earlier","reports":[{"report_id":"mock-earlier-1","title":"Healthcare Ransomware Roundup, Q2 2026","published_at":"2026-06-02T00:00:00Z","quote":"beacons were sent to 198[.]51[.]100[.]23"},{"report_id":"mock-earlier-2","title":"Fake Invoice Campaign Hits Retail","published_at":"2025-11-18T00:00:00Z","quote":"the victim web server at 198[.]51[.]100[.]23"}],"explained_by_time":true}]}
+{
+  "nodes": [
+    { "id": "report:mock-report",   "type": "report", "label": "ObsidianLock Ransomware Targeting Regional Hospitals",       "first_seen": "2026-10-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "report:mock-report-2", "type": "report", "label": "APT29 Spearphishing Campaign Against EU Energy Sector",      "first_seen": "2026-09-15T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 1 },
+    { "id": "report:mock-report-3", "type": "report", "label": "Cl0p MOVEit Mass Exploitation Follow-Up",                   "first_seen": "2026-08-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+    { "id": "report:mock-report-4", "type": "report", "label": "RedCurl Corporate Espionage via Phishing",                  "first_seen": "2026-07-10T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+
+    { "id": "actor:apt29",          "type": "actor",  "label": "APT29 (Cozy Bear)",         "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 2 },
+    { "id": "actor:clop",           "type": "actor",  "label": "Cl0p",                      "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+    { "id": "actor:redcurl",        "type": "actor",  "label": "RedCurl",                   "first_seen": "2026-05-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+    { "id": "actor:obsidianlock",   "type": "actor",  "label": "ObsidianLock Affiliates",   "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+
+    { "id": "malware:obsidianlock-loader", "type": "malware", "label": "ObsidianLock Loader",  "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "malware:cobalt-strike",       "type": "malware", "label": "Cobalt Strike",         "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 2 },
+    { "id": "malware:clop-ransomware",     "type": "malware", "label": "Cl0p Ransomware",       "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+    { "id": "malware:redcurl-agent",       "type": "malware", "label": "RedCurl REvil Agent",   "first_seen": "2026-05-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+
+    { "id": "sector:healthcare", "type": "sector", "label": "Healthcare",  "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "sector:energy",     "type": "sector", "label": "Energy",      "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 1 },
+    { "id": "sector:finance",    "type": "sector", "label": "Finance",     "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 2 },
+    { "id": "sector:corporate",  "type": "sector", "label": "Corporate",   "first_seen": "2026-05-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+
+    { "id": "ioc:ipv4:198.51.100.23",                          "type": "ioc", "label": "198[.]51[.]100[.]23",                           "first_seen": "2025-11-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 3 },
+    { "id": "ioc:domain:invoice-portal-secure.example",        "type": "ioc", "label": "invoice-portal-secure[.]example",               "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 2 },
+    { "id": "ioc:sha256:9f2c1e7ab4d05c3e8f61a2b7c4d9e0f13a5b6c7d8e9f00112233445566778899", "type": "ioc", "label": "9f2c1e7a…8899",  "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:email:billing@invoice-portal-secure.example", "type": "ioc", "label": "billing[@]invoice-portal-secure[.]example",     "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:cve:CVE-2023-27350",                          "type": "ioc", "label": "CVE-2023-27350",                                "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:registry:HKCU-Run",                           "type": "ioc", "label": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:url:cdn-sync-update",                         "type": "ioc", "label": "hxxps://cdn-sync-update[.]example/gate.php",    "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:ipv4:203.0.113.80",                           "type": "ioc", "label": "203[.]0[.]113[.]80",                            "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+
+    { "id": "ioc:domain:apt29-phishing.example",               "type": "ioc", "label": "apt29-phishing[.]example",                      "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:ipv4:185.220.101.47",                         "type": "ioc", "label": "185[.]220[.]101[.]47",                          "first_seen": "2026-08-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 2 },
+    { "id": "ioc:sha256:apt29-cobalt-hash",                    "type": "ioc", "label": "a1b2c3d4e5f6…",                                 "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:domain:energy-docs-download.example",         "type": "ioc", "label": "energy-docs-download[.]example",                "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:cve:CVE-2024-20656",                          "type": "ioc", "label": "CVE-2024-20656",                                "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 1 },
+
+    { "id": "ioc:domain:moveit.transfer.example",              "type": "ioc", "label": "moveit-transfer[.]example",                     "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:ipv4:45.142.212.100",                         "type": "ioc", "label": "45[.]142[.]212[.]100",                          "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 2 },
+    { "id": "ioc:sha256:clop-webshell-hash",                   "type": "ioc", "label": "c0c0c0d1d2d3…",                                 "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:cve:CVE-2023-34362",                          "type": "ioc", "label": "CVE-2023-34362",                                "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+
+    { "id": "ioc:domain:redcurl-drop.example",                 "type": "ioc", "label": "redcurl-drop[.]example",                        "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:email:hr@redcurl-drop.example",               "type": "ioc", "label": "hr[@]redcurl-drop[.]example",                   "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+    { "id": "ioc:sha256:redcurl-agent-hash",                   "type": "ioc", "label": "deadbeef1234…",                                 "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+
+    { "id": "technique:T1566.001", "type": "technique", "label": "Spearphishing Attachment",          "first_seen": "2026-07-10T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 4 },
+    { "id": "technique:T1059.001", "type": "technique", "label": "PowerShell",                        "first_seen": "2026-07-10T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 4 },
+    { "id": "technique:T1547.001", "type": "technique", "label": "Registry Run Keys",                 "first_seen": "2026-07-10T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 2 },
+    { "id": "technique:T1003.001", "type": "technique", "label": "LSASS Memory",                     "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "technique:T1021.001", "type": "technique", "label": "Remote Desktop Protocol",           "first_seen": "2026-09-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 1 },
+    { "id": "technique:T1071.001", "type": "technique", "label": "Web Protocols",                     "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 3 },
+    { "id": "technique:T1041",     "type": "technique", "label": "Exfiltration Over C2 Channel",      "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 2 },
+    { "id": "technique:T1486",     "type": "technique", "label": "Data Encrypted for Impact",         "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-10-01T00:00:00Z", "report_count": 2 },
+    { "id": "technique:T1190",     "type": "technique", "label": "Exploit Public-Facing Application", "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+    { "id": "technique:T1505.003", "type": "technique", "label": "Web Shell",                         "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-08-01T00:00:00Z", "report_count": 1 },
+    { "id": "technique:T1078",     "type": "technique", "label": "Valid Accounts",                    "first_seen": "2026-07-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 2 },
+    { "id": "technique:T1027",     "type": "technique", "label": "Obfuscated Files or Information",   "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-09-15T00:00:00Z", "report_count": 2 },
+    { "id": "technique:T1074",     "type": "technique", "label": "Data Staged",                       "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+    { "id": "technique:T1567",     "type": "technique", "label": "Exfiltration Over Web Service",     "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 },
+    { "id": "technique:T1560.001", "type": "technique", "label": "Archive via Utility",               "first_seen": "2026-06-01T00:00:00Z", "last_seen": "2026-07-10T00:00:00Z", "report_count": 1 }
+  ],
+  "edges": [
+    { "id": "e-r1-ioc1",  "source": "ioc:domain:invoice-portal-secure.example",        "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-ioc2",  "source": "ioc:email:billing@invoice-portal-secure.example", "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-ioc3",  "source": "ioc:cve:CVE-2023-27350",                          "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-ioc4",  "source": "ioc:sha256:9f2c1e7ab4d05c3e8f61a2b7c4d9e0f13a5b6c7d8e9f00112233445566778899", "target": "report:mock-report", "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-ioc5",  "source": "ioc:registry:HKCU-Run",                           "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-ioc6",  "source": "ioc:url:cdn-sync-update",                         "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-ioc7",  "source": "ioc:ipv4:198.51.100.23",                          "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-ioc8",  "source": "ioc:ipv4:203.0.113.80",                           "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t1",    "source": "technique:T1566.001",                              "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t2",    "source": "technique:T1059.001",                              "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t3",    "source": "technique:T1547.001",                              "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t4",    "source": "technique:T1003.001",                              "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t5",    "source": "technique:T1021.001",                              "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t6",    "source": "technique:T1071.001",                              "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t7",    "source": "technique:T1041",                                  "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-t8",    "source": "technique:T1486",                                  "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-actor", "source": "actor:obsidianlock",                               "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-mal",   "source": "malware:obsidianlock-loader",                      "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-r1-sec",   "source": "sector:healthcare",                                "target": "report:mock-report",   "relation": "mentioned_in", "valid_from": "2026-10-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+
+    { "id": "e-r2-ioc1",  "source": "ioc:domain:apt29-phishing.example",               "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-ioc2",  "source": "ioc:ipv4:185.220.101.47",                         "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-ioc3",  "source": "ioc:sha256:apt29-cobalt-hash",                    "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-ioc4",  "source": "ioc:domain:energy-docs-download.example",         "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-ioc5",  "source": "ioc:cve:CVE-2024-20656",                          "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-shared1","source": "ioc:ipv4:198.51.100.23",                          "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-shared2","source": "ioc:domain:invoice-portal-secure.example",        "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-t1",    "source": "technique:T1566.001",                              "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-t2",    "source": "technique:T1059.001",                              "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-t3",    "source": "technique:T1078",                                  "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-t4",    "source": "technique:T1027",                                  "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-t5",    "source": "technique:T1071.001",                              "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-actor", "source": "actor:apt29",                                      "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-mal",   "source": "malware:cobalt-strike",                            "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-r2-sec",   "source": "sector:energy",                                    "target": "report:mock-report-2", "relation": "mentioned_in", "valid_from": "2026-09-15T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+
+    { "id": "e-r3-ioc1",  "source": "ioc:domain:moveit.transfer.example",              "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-ioc2",  "source": "ioc:ipv4:45.142.212.100",                         "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-ioc3",  "source": "ioc:sha256:clop-webshell-hash",                   "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-ioc4",  "source": "ioc:cve:CVE-2023-34362",                          "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-shared1","source": "ioc:ipv4:198.51.100.23",                          "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-shared2","source": "ioc:ipv4:185.220.101.47",                         "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-t1",    "source": "technique:T1190",                                  "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-t2",    "source": "technique:T1059.001",                              "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-t3",    "source": "technique:T1505.003",                              "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-t4",    "source": "technique:T1486",                                  "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-t5",    "source": "technique:T1041",                                  "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-actor", "source": "actor:clop",                                       "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-mal",   "source": "malware:clop-ransomware",                          "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-r3-sec",   "source": "sector:finance",                                   "target": "report:mock-report-3", "relation": "mentioned_in", "valid_from": "2026-08-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+
+    { "id": "e-r4-ioc1",  "source": "ioc:domain:redcurl-drop.example",                 "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-ioc2",  "source": "ioc:email:hr@redcurl-drop.example",               "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-ioc3",  "source": "ioc:sha256:redcurl-agent-hash",                   "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-shared1","source": "ioc:ipv4:45.142.212.100",                         "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t1",    "source": "technique:T1566.001",                              "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t2",    "source": "technique:T1059.001",                              "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t3",    "source": "technique:T1547.001",                              "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t4",    "source": "technique:T1074",                                  "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t5",    "source": "technique:T1567",                                  "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t6",    "source": "technique:T1560.001",                              "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t7",    "source": "technique:T1027",                                  "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t8",    "source": "technique:T1078",                                  "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-t9",    "source": "technique:T1071.001",                              "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-actor", "source": "actor:redcurl",                                    "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-mal",   "source": "malware:redcurl-agent",                            "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-r4-sec",   "source": "sector:corporate",                                 "target": "report:mock-report-4", "relation": "mentioned_in", "valid_from": "2026-07-10T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+
+    { "id": "e-attr-1",  "source": "actor:obsidianlock",   "target": "malware:obsidianlock-loader", "relation": "uses",          "valid_from": "2026-09-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-attr-2",  "source": "actor:apt29",           "target": "malware:cobalt-strike",       "relation": "uses",          "valid_from": "2026-06-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-attr-3",  "source": "actor:clop",            "target": "malware:clop-ransomware",     "relation": "uses",          "valid_from": "2026-07-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-attr-4",  "source": "actor:redcurl",         "target": "malware:redcurl-agent",       "relation": "uses",          "valid_from": "2026-05-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-attr-5",  "source": "actor:obsidianlock",   "target": "sector:healthcare",            "relation": "targets",       "valid_from": "2026-09-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-attr-6",  "source": "actor:apt29",           "target": "sector:energy",               "relation": "targets",       "valid_from": "2026-09-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" },
+    { "id": "e-attr-7",  "source": "actor:clop",            "target": "sector:finance",              "relation": "targets",       "valid_from": "2026-07-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-3" },
+    { "id": "e-attr-8",  "source": "actor:redcurl",         "target": "sector:corporate",            "relation": "targets",       "valid_from": "2026-06-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-4" },
+    { "id": "e-attr-9",  "source": "malware:obsidianlock-loader", "target": "ioc:ipv4:198.51.100.23", "relation": "uses",        "valid_from": "2026-09-01T00:00:00Z", "valid_to": null, "report_id": "mock-report" },
+    { "id": "e-attr-10", "source": "malware:cobalt-strike", "target": "ioc:ipv4:185.220.101.47",     "relation": "uses",          "valid_from": "2026-09-01T00:00:00Z", "valid_to": null, "report_id": "mock-report-2" }
+  ],
+  "alerts": [
+    {
+      "type": "contradiction",
+      "entity_type": "ioc",
+      "entity_key": "ipv4:198.51.100.23",
+      "entity_display": "198[.]51[.]100[.]23",
+      "message": "Conflicting claims: 198[.]51[.]100[.]23 is described as c2 in one report and as victim in another",
+      "reports": [
+        {
+          "report_id": "mock-report",
+          "title": "ObsidianLock Ransomware Targeting Regional Hospitals",
+          "published_at": "2026-10-01T00:00:00Z",
+          "quote": "That host resolved to 198[.]51[.]100[.]23 for the whole intrusion."
+        },
+        {
+          "report_id": "mock-report-2",
+          "title": "APT29 Spearphishing Campaign Against EU Energy Sector",
+          "published_at": "2026-09-15T00:00:00Z",
+          "quote": "the victim jump-host 198[.]51[.]100[.]23 was later re-used as infrastructure"
+        }
+      ],
+      "explained_by_time": true
+    },
+    {
+      "type": "seen_before",
+      "entity_type": "ioc",
+      "entity_key": "ipv4:185.220.101.47",
+      "entity_display": "185[.]220[.]101[.]47",
+      "message": "185[.]220[.]101[.]47 appeared in 2 earlier report(s)",
+      "reports": [
+        {
+          "report_id": "mock-report-2",
+          "title": "APT29 Spearphishing Campaign Against EU Energy Sector",
+          "published_at": "2026-09-15T00:00:00Z",
+          "quote": "beacons to 185[.]220[.]101[.]47"
+        },
+        {
+          "report_id": "mock-report-3",
+          "title": "Cl0p MOVEit Mass Exploitation Follow-Up",
+          "published_at": "2026-08-01T00:00:00Z",
+          "quote": "exfil server 185[.]220[.]101[.]47"
+        }
+      ],
+      "explained_by_time": null
+    },
+    {
+      "type": "seen_before",
+      "entity_type": "ioc",
+      "entity_key": "ipv4:45.142.212.100",
+      "entity_display": "45[.]142[.]212[.]100",
+      "message": "45[.]142[.]212[.]100 appeared in 2 earlier report(s)",
+      "reports": [
+        {
+          "report_id": "mock-report-3",
+          "title": "Cl0p MOVEit Mass Exploitation Follow-Up",
+          "published_at": "2026-08-01T00:00:00Z",
+          "quote": "staging server at 45[.]142[.]212[.]100"
+        },
+        {
+          "report_id": "mock-report-4",
+          "title": "RedCurl Corporate Espionage via Phishing",
+          "published_at": "2026-07-10T00:00:00Z",
+          "quote": "data exfiltrated to 45[.]142[.]212[.]100"
+        }
+      ],
+      "explained_by_time": null
+    }
+  ]
+}

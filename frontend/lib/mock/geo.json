@@ -1,1 +1,10 @@
-[{"ioc_id":"ioc-8","display":"198[.]51[.]100[.]23","lat":52.37,"lon":4.89,"country":"NL","city":"Amsterdam","role":"c2"},{"ioc_id":"ioc-10","display":"203[.]0[.]113[.]80","lat":52.37,"lon":4.89,"country":"NL","city":"Amsterdam","role":"exfil"}]
+[
+  { "ioc_id": "ioc-8",  "display": "198[.]51[.]100[.]23",                    "lat": 52.37, "lon":  4.89, "country": "NL", "city": "Amsterdam", "role": "c2" },
+  { "ioc_id": "ioc-10", "display": "203[.]0[.]113[.]80",                      "lat": 50.11, "lon":  8.68, "country": "DE", "city": "Frankfurt", "role": "exfil" },
+  { "ioc_id": "ioc-11", "display": "185[.]220[.]101[.]47",                    "lat": 48.20, "lon": 16.37, "country": "AT", "city": "Vienna",    "role": "c2" },
+  { "ioc_id": "ioc-12", "display": "45[.]142[.]212[.]100",                    "lat": 51.51, "lon": -0.13, "country": "GB", "city": "London",    "role": "infrastructure" },
+  { "ioc_id": "ioc-13", "display": "cdn-sync-update[.]example",              "lat": 37.75, "lon":-122.42, "country": "US", "city": "San Francisco", "role": "c2" },
+  { "ioc_id": "ioc-14", "display": "invoice-portal-secure[.]example",        "lat": 50.45, "lon": 30.52, "country": "UA", "city": "Kyiv",      "role": "phishing" },
+  { "ioc_id": "ioc-15", "display": "10[.]20[.]30[.]15",                       "lat": 40.71, "lon":-74.01, "country": "US", "city": "New York",  "role": "victim" },
+  { "ioc_id": "ioc-16", "display": "91[.]92[.]254[.]100",                     "lat": 55.75, "lon": 37.62, "country": "RU", "city": "Moscow",    "role": "infrastructure" }
+]

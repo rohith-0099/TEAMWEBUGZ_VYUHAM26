@@ -1,4 +1,6 @@
-// Placeholder. Owner: Frontend B, see team/02_FRONTEND_B.md section 6.
+// Owner: Frontend B — see team/02_FRONTEND_B.md §6
+import { ScoreboardPage } from "@/components/eval/ScoreboardPage";
+
 export default function EvalPage() {
-  return <main className="p-6 text-muted-foreground">Coming soon: scoreboard</main>;
+  return <ScoreboardPage />;
 }

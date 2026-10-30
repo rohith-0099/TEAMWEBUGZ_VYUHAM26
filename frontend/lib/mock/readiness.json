@@ -1,1 +1,68 @@
-{"readiness_pct":50.0,"per_technique":[{"technique_id":"T1059.001","technique_name":"PowerShell","status":"partial","have":["windows_security","sysmon"],"missing":["powershell_scriptblock","edr"]},{"technique_id":"T1547.001","technique_name":"Registry Run Keys / Startup Folder","status":"partial","have":["sysmon"],"missing":["edr"]},{"technique_id":"T1071.001","technique_name":"Web Protocols","status":"partial","have":["dns"],"missing":["proxy","netflow"]}]}
+{
+  "readiness_pct": 44.4,
+  "per_technique": [
+    {
+      "technique_id": "T1566.001",
+      "technique_name": "Spearphishing Attachment",
+      "status": "covered",
+      "have": ["email_gateway", "edr"],
+      "missing": []
+    },
+    {
+      "technique_id": "T1059.001",
+      "technique_name": "PowerShell",
+      "status": "partial",
+      "have": ["windows_security", "sysmon"],
+      "missing": ["powershell_scriptblock", "edr"]
+    },
+    {
+      "technique_id": "T1547.001",
+      "technique_name": "Registry Run Keys / Startup Folder",
+      "status": "partial",
+      "have": ["sysmon"],
+      "missing": ["edr"]
+    },
+    {
+      "technique_id": "T1003.001",
+      "technique_name": "LSASS Memory",
+      "status": "gap",
+      "have": [],
+      "missing": ["sysmon", "edr", "windows_security"]
+    },
+    {
+      "technique_id": "T1021.001",
+      "technique_name": "Remote Desktop Protocol",
+      "status": "partial",
+      "have": ["windows_security", "firewall"],
+      "missing": ["edr", "netflow"]
+    },
+    {
+      "technique_id": "T1071.001",
+      "technique_name": "Web Protocols",
+      "status": "partial",
+      "have": ["dns"],
+      "missing": ["proxy", "netflow"]
+    },
+    {
+      "technique_id": "T1041",
+      "technique_name": "Exfiltration Over C2 Channel",
+      "status": "gap",
+      "have": [],
+      "missing": ["netflow", "firewall", "proxy"]
+    },
+    {
+      "technique_id": "T1486",
+      "technique_name": "Data Encrypted for Impact",
+      "status": "gap",
+      "have": [],
+      "missing": ["edr", "sysmon"]
+    },
+    {
+      "technique_id": "T1490",
+      "technique_name": "Inhibit System Recovery",
+      "status": "covered",
+      "have": ["edr", "sysmon", "windows_security"],
+      "missing": []
+    }
+  ]
+}
