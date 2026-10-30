@@ -24,3 +24,4 @@ pdfplumber
 iocsearcher
 stix2
 maxminddb
+fastembed
