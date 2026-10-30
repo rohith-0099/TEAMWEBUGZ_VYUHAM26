@@ -481,7 +481,7 @@ Base URL: `http://localhost:8000` (env `NEXT_PUBLIC_API_URL` on the frontend). A
 | GET | `/api/graph` | query `at?`=ISO date, `limit?`=int | `GraphResponse` | P5 |
 | GET | `/api/attack/tactics` | – | `Tactic[]` ordered | P4 |
 | GET | `/api/attack/techniques/{id}` | – | `TechniqueDetail` | P4 |
-| GET | `/api/eval` | – | `EvalResponse` (latest run) | P5 |
+| GET | `/api/eval` | – | `EvalResponse` (latest run); **404 until `run_eval.py` has really been run** | P5 |
 
 PDF report = browser print view (P1), **not** a backend export.
 

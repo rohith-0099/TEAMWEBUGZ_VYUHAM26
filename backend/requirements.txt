@@ -16,3 +16,5 @@ pyyaml
 rapidfuzz
 pytest
 pytest-asyncio
+pysigma
+pysigma-backend-splunk

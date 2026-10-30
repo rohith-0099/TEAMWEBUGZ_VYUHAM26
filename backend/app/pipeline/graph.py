@@ -7,9 +7,12 @@ tie → flow ; [flow, detect, memory] → export → END
 
 Every node is wrapped by stage(), which publishes SSE events, records timings and saves.
 Nodes mutate the shared ReportAnalysis and write distinct fields, so parallel branches
-never conflict. The runner sets status="done" and publishes pipeline:done after END.
+never conflict. LangGraph runs in supersteps, so ioc has always finished before verify
+starts and verify can read the IOCs. The runner sets status="done" and publishes
+pipeline:done after END.
 """
 import asyncio
+import logging
 import operator
 import random
 import time
@@ -20,7 +23,9 @@ from typing import Annotated, Any, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from app import db
+from app.config import settings
 from app.events import publish
+from app.llm import begin_usage
 from app.models import Behaviour, Candidate, Detection, Evidence, ReportAnalysis, TechniqueMatch
 from app.pipeline.behaviours import extract_behaviours
 from app.pipeline.detect import build_detections
@@ -32,9 +37,12 @@ from app.pipeline.ioc_role import label_roles
 from app.pipeline.link import link_iocs
 from app.pipeline.memory import write_memory
 from app.pipeline.migrate import migrate
+from app.pipeline.notify import notify
 from app.pipeline.retrieve import explicit_ids, retrieve_candidates
 from app.pipeline.tie import predict
 from app.pipeline.verify import verify_all
+
+log = logging.getLogger(__name__)
 
 SAVE_INTERVAL_S = 0.5
 
@@ -76,16 +84,21 @@ def stage(name: str, core: bool = False):
             analysis_id, analysis = state["analysis_id"], state["analysis"]
             await publish(analysis_id, name, "started")
             started = time.monotonic()
+            usage = begin_usage()
             try:
-                # TODO(Lead): remove once stages do real work; this only animates the UI.
-                await asyncio.sleep(random.uniform(0.3, 1.0))
+                if not settings.llm_api_key:
+                    # Offline mock mode is instant, so this keeps the UI animation visible.
+                    await asyncio.sleep(random.uniform(0.3, 1.0))
                 done_data, updates = await fn(state)
             except Exception as exc:
+                log.exception("stage %s failed for %s", name, analysis_id)
                 await publish(analysis_id, name, "error", {"message": str(exc)})
                 if core:
                     raise
                 return {"done": [name]}
             analysis.timings_ms[name] = int((time.monotonic() - started) * 1000)
+            if usage.calls or usage.cached:
+                log.info("stage %s: %s", name, usage)
             await publish(analysis_id, name, "done", done_data)
             await _save_throttled(analysis)
             return {"done": [name], **updates}
@@ -113,6 +126,11 @@ async def ingest_node(state: State) -> StageResult:
 async def guard_node(state: State) -> StageResult:
     a = state["analysis"]
     a.injection_flags = await scan(state["ingest_result"].raw_text, a.text)
+    if a.injection_flags:
+        worst = a.injection_flags[0]
+        await notify("injection_detected", {"report_id": a.report_id, "title": a.title,
+                                            "technique_id": worst.technique_id,
+                                            "flags": len(a.injection_flags)})
     return {"flags": _dump(a.injection_flags)}, {}
 
 
@@ -211,6 +229,7 @@ async def memory_node(state: State) -> StageResult:
 
 @stage("export")
 async def export_node(state: State) -> StageResult:
+    _last_save.pop(state["analysis_id"], None)
     return {"formats": ["stix", "navigator", "sigma", "flow"]}, {}
 
 

@@ -62,6 +62,10 @@ def main() -> None:
         if analysis["status"] != "done":
             fail(f"final status is {analysis['status']}")
         accepted = [t for t in analysis["techniques"] if t["status"] == "accepted"]
+        for t in accepted:  # the golden rule: every accepted technique is proven by the source text
+            evidence = t["evidence"]
+            if evidence is None or analysis["text"][evidence["start"]:evidence["end"]] != evidence["quote"]:
+                fail(f"{t['technique_id']} has evidence that is not in the report")
         print(f"OK: {len(done)}/{len(STAGES)} stages done | title={analysis['title']!r} | "
               f"iocs={len(analysis['iocs'])} behaviours={len(analysis['behaviours'])} "
               f"techniques={len(accepted)} accepted/{len(analysis['techniques'])} total "
