@@ -16,3 +16,4 @@ pyyaml
 rapidfuzz
 pytest
 pytest-asyncio
+fastembed
