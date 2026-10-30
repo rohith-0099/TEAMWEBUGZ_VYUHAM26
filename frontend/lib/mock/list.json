@@ -1,0 +1,54 @@
+[
+  {
+    "report_id": "mock-report",
+    "title": "ObsidianLock Ransomware Intrusion Targeting Regional Hospitals",
+    "source_url": "https://intel.example/reports/obsidianlock-2026",
+    "published_at": "2026-09-24T10:00:00Z",
+    "created_at": "2026-10-30T14:32:10Z",
+    "status": "done",
+    "counts": {
+      "iocs": 8,
+      "techniques": 8,
+      "alerts": 2
+    }
+  },
+  {
+    "report_id": "cisa-aa24-241a",
+    "title": "CISA AA24-241A: Iranian Cyber Actors Targeting Critical Infrastructure",
+    "source_url": "https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-241a",
+    "published_at": "2026-08-28T14:00:00Z",
+    "created_at": "2026-10-29T18:12:00Z",
+    "status": "done",
+    "counts": {
+      "iocs": 15,
+      "techniques": 12,
+      "alerts": 1
+    }
+  },
+  {
+    "report_id": "dfir-report-q3",
+    "title": "The DFIR Report: Latrodectus Loader to Ransomware in 48 Hours",
+    "source_url": "https://thedfirreport.example/2026/latrodectus-flow",
+    "published_at": "2026-09-12T08:30:00Z",
+    "created_at": "2026-10-29T11:45:00Z",
+    "status": "done",
+    "counts": {
+      "iocs": 22,
+      "techniques": 14,
+      "alerts": 3
+    }
+  },
+  {
+    "report_id": "unit42-clop-campaign",
+    "title": "Unit 42: CL0P Exploitation of Zero-Day File Transfer Vulnerabilities",
+    "source_url": "https://unit42.example/clop-campaign-2026",
+    "published_at": "2026-07-19T12:00:00Z",
+    "created_at": "2026-10-28T09:20:00Z",
+    "status": "done",
+    "counts": {
+      "iocs": 19,
+      "techniques": 10,
+      "alerts": 0
+    }
+  }
+]
