@@ -33,7 +33,7 @@ export function ExportDropdown({ reportId, disabled = false }: ExportDropdownPro
 
   return (
     <TooltipProvider delay={200}>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -77,7 +77,7 @@ export function ExportDropdown({ reportId, disabled = false }: ExportDropdownPro
                 />
               }
             >
-              <FileSpreadsheet className="size-4 text-emerald-400" />
+              <FileSpreadsheet className="size-4 text-success" />
               <div className="flex flex-col">
                 <span className="font-medium">ATT&CK Navigator Layer</span>
                 <span className="text-[10px] text-muted-foreground">v20 Matrix Layer JSON</span>
@@ -93,7 +93,7 @@ export function ExportDropdown({ reportId, disabled = false }: ExportDropdownPro
                 />
               }
             >
-              <Code className="size-4 text-amber-400" />
+              <Code className="size-4 text-warning" />
               <div className="flex flex-col">
                 <span className="font-medium">Sigma Detection Rules</span>
                 <span className="text-[10px] text-muted-foreground">Validated YAML archive</span>
@@ -109,7 +109,7 @@ export function ExportDropdown({ reportId, disabled = false }: ExportDropdownPro
                 />
               }
             >
-              <Network className="size-4 text-teal-400" />
+              <Network className="size-4 text-observed" />
               <div className="flex flex-col">
                 <span className="font-medium">Attack Flow Schema</span>
                 <span className="text-[10px] text-muted-foreground">CTID Attack Flow 3 JSON</span>

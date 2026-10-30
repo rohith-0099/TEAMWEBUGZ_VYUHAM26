@@ -87,15 +87,12 @@ def _load_bundle() -> list[dict[str, Any]]:
     if not isinstance(objects, list):
         raise ValueError("Invalid STIX bundle: missing objects list.")
 
+    # The collection object carries no external_references, so match on its name.
     collection = next(
         (
             obj for obj in objects
             if obj.get("type") == "x-mitre-collection"
-            and any(
-                ref.get("source_name") == "mitre-attack"
-                and ref.get("external_id") == "enterprise-attack"
-                for ref in obj.get("external_references", [])
-            )
+            and obj.get("name") == "Enterprise ATT&CK"
         ),
         None,
     )
@@ -103,10 +100,9 @@ def _load_bundle() -> list[dict[str, Any]]:
     if collection is None:
         raise ValueError("Enterprise ATT&CK collection not found.")
 
-    # The collection's x_mitre_version is not the ATT&CK dataset version.
-    # Verify the pinned v20 bundle identity and Enterprise collection instead.
-    if BUNDLE_PATH.name != "enterprise-attack-20.0.json":
-        raise ValueError("Unexpected ATT&CK bundle filename.")
+    version = str(collection.get("x_mitre_version", ""))
+    if not version.startswith("20."):
+        raise ValueError(f"Expected ATT&CK v20.x, found {version!r}.")
 
     print("Verified bundle: Enterprise ATT&CK v20.0")
     print(f"Collection metadata version: {collection.get('x_mitre_version')}")

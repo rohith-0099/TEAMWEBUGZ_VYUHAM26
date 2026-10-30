@@ -21,8 +21,10 @@ log = logging.getLogger(__name__)
 
 CONTEXT_CHARS = 300
 EXPLICIT_NEAR_CHARS = 500
-DESCRIPTION_CHARS = 700
-EXAMPLES_PER_CANDIDATE = 2
+DESCRIPTION_CHARS = 450
+EXAMPLES_PER_CANDIDATE = 1
+MAX_CANDIDATES_SENT = 6  # retrieval ranks them; explicit IDs always go in
+MAX_VERIFY_TOKENS = 1500
 MAX_REJECTED_PER_BEHAVIOUR = 3
 OUTSIDE_CANDIDATES_FACTOR = 0.8
 FUZZY_QUOTE_FACTOR = 0.9
@@ -139,12 +141,12 @@ def _user_prompt(text: str, behaviour: Behaviour, blocks: list[str], iocs: list[
 async def _verify_behaviour(text: str, behaviour: Behaviour, behaviour_id: str | None,
                             candidates: list[Candidate], iocs: list[IOC],
                             emit: Callable[[TechniqueMatch], Awaitable[None]]) -> None:
-    ordered = sorted(candidates, key=lambda c: c.score, reverse=True)
+    ordered = sorted(candidates, key=lambda c: c.score, reverse=True)[:MAX_CANDIDATES_SENT]
     blocks = [b for b in map(_candidate_block, ordered) if b]
     if not blocks:
         return
     out = await complete_json(SYSTEM_PROMPT, _user_prompt(text, behaviour, blocks, iocs), _Out,
-                              model="verify")
+                              model="verify", max_tokens=MAX_VERIFY_TOKENS)
 
     candidate_ids = {c.technique_id for c in ordered}
     ioc_ids = {i.id for i in iocs}

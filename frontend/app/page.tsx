@@ -1,37 +1,44 @@
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { NeuronField } from "@/components/charts";
+import { ActivityBars } from "@/components/input/ActivityBars";
+import { IdleRadar } from "@/components/input/IdleRadar";
 import { InputCard } from "@/components/input/InputCard";
 import { RecentAnalyses } from "@/components/input/RecentAnalyses";
 
-// Home: hero + input card + recent analyses. Owner: Frontend A, see team/01_FRONTEND_A.md §4.2.
+// Home: input + idle radar, then recent reports + activity. Owner: Frontend A, see team/01_FRONTEND_A.md §4.2.
 export default function HomePage() {
   return (
-    <div className="bg-grid-glow relative min-h-[calc(100dvh-3.5rem)]">
-      <main className="relative mx-auto flex max-w-2xl flex-col gap-10 px-6 py-16 sm:py-24">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-            <ShieldCheck className="size-3.5" aria-hidden="true" /> ATT&amp;CK v20 · evidence-grounded
-          </span>
-          <h1 className="text-balance font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-            Threat reports in.{" "}
-            <span className="text-primary drop-shadow-[0_0_18px_color-mix(in_oklch,var(--primary),transparent_40%)]">
-              Verified intelligence
-            </span>{" "}
-            out.
-          </h1>
-          <p className="max-w-lg text-balance text-muted-foreground">
-            Every technique is proven by the report&apos;s own words — no hallucinated IDs, no invented
-            quotes. Paste a report and watch the pipeline work in real time.
-          </p>
+    <div className="relative min-h-[calc(100dvh-3.5rem)] overflow-hidden">
+      <NeuronField />
+      <main className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6 lg:py-14">
+        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+          <div className="flex min-w-0 flex-col gap-6">
+            <div className="flex flex-col gap-3">
+              <h1 className="text-4xl font-semibold tracking-tight xl:text-5xl">
+                Threat reports in.
+                <br />
+                Verified intelligence out.
+              </h1>
+              <p className="max-w-xl text-balance text-muted-foreground">
+                Every technique is proven by the report&apos;s own words. No invented IDs, no invented quotes.
+              </p>
+            </div>
+            <InputCard />
+          </div>
+          <div className="mx-auto w-full max-w-md lg:max-w-none">
+            <IdleRadar />
+          </div>
         </div>
 
-        <InputCard />
-
-        <section className="flex flex-col gap-3">
-          <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-            <Sparkles className="size-3.5" aria-hidden="true" /> Recent analyses
-          </h2>
-          <RecentAnalyses />
-        </section>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <section className="flex min-w-0 flex-col gap-3">
+            <h2 className="console-title">Recent reports</h2>
+            <RecentAnalyses />
+          </section>
+          <section className="flex min-w-0 flex-col gap-3">
+            <h2 className="console-title">Activity</h2>
+            <ActivityBars />
+          </section>
+        </div>
       </main>
     </div>
   );

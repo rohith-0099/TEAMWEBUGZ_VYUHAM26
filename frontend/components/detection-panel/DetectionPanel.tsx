@@ -6,38 +6,39 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { NeonGauge } from "@/components/charts";
 import type { Detection, ReportAnalysis, SigmaRule, Telemetry } from "@/lib/types";
 import { readiness, exportUrl } from "@/lib/api";
 import type { ReadinessResponse } from "@/lib/types";
 
 // ─── colours (§11) ───────────────────────────────────────────────────────────
 const C = {
-  bg: "#07090D",
-  surface: "#0E1117",
-  raised: "#151A22",
-  border: "#232A35",
-  text: "#E6EDF3",
-  muted: "#8B95A5",
-  observed: "#22D3EE",
+  bg: "#000000",
+  surface: "#0A0A0A",
+  raised: "#141414",
+  border: "#1F1F1F",
+  text: "#F5F5F7",
+  muted: "#8A8A93",
+  observed: "#22F0FF",
   predicted: "#A78BFA",
-  success: "#34D399",
-  warning: "#FBBF24",
-  danger: "#F87171",
+  success: "#39FF88",
+  warning: "#FFC53D",
+  danger: "#FF3B5C",
 };
 
 // ─── telemetry display config ─────────────────────────────────────────────────
 const TELEMETRY_INFO: Record<Telemetry, { label: string; icon: string }> = {
-  sysmon: { label: "Sysmon", icon: "🔍" },
-  windows_security: { label: "Windows Security Log", icon: "🛡" },
-  powershell_scriptblock: { label: "PowerShell Script Block Logging", icon: "💻" },
-  edr: { label: "EDR", icon: "🤖" },
-  dns: { label: "DNS logs", icon: "🌐" },
-  proxy: { label: "Web proxy logs", icon: "🔀" },
-  firewall: { label: "Firewall logs", icon: "🔥" },
-  netflow: { label: "NetFlow", icon: "📊" },
-  cloud_audit: { label: "Cloud audit logs", icon: "☁" },
-  email_gateway: { label: "Email gateway", icon: "✉" },
-  linux_auditd: { label: "Linux auditd", icon: "🐧" },
+  sysmon: { label: "Sysmon", icon: "" },
+  windows_security: { label: "Windows Security Log", icon: "" },
+  powershell_scriptblock: { label: "PowerShell Script Block Logging", icon: "" },
+  edr: { label: "EDR", icon: "" },
+  dns: { label: "DNS logs", icon: "" },
+  proxy: { label: "Web proxy logs", icon: "" },
+  firewall: { label: "Firewall logs", icon: "" },
+  netflow: { label: "NetFlow", icon: "" },
+  cloud_audit: { label: "Cloud audit logs", icon: "" },
+  email_gateway: { label: "Email gateway", icon: "" },
+  linux_auditd: { label: "Linux auditd", icon: "" },
 };
 
 const ALL_TELEMETRY = Object.keys(TELEMETRY_INFO) as Telemetry[];
@@ -66,42 +67,10 @@ function saveTelemetry(sel: Telemetry[]) {
 
 // ─── Radial readiness gauge ────────────────────────────────────────────────────
 function ReadinessGauge({ pct }: { pct: number }) {
-  const r = 52;
-  const circ = 2 * Math.PI * r;
-  const filled = (pct / 100) * circ;
   const color = pct >= 70 ? C.success : pct >= 40 ? C.warning : C.danger;
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 16 }}>
-      <svg width={128} height={128} viewBox="0 0 128 128">
-        <circle cx={64} cy={64} r={r} fill="none" stroke={C.border} strokeWidth={12} />
-        <motion.circle
-          cx={64}
-          cy={64}
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={12}
-          strokeLinecap="round"
-          strokeDasharray={`${circ}`}
-          initial={{ strokeDashoffset: circ }}
-          animate={{ strokeDashoffset: circ - filled }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          style={{
-            transformOrigin: "64px 64px",
-            transform: "rotate(-90deg)",
-            filter: `drop-shadow(0 0 6px ${color})`,
-          }}
-        />
-        <text x={64} y={60} textAnchor="middle" fill={color} fontSize={22} fontWeight={800}>
-          {pct.toFixed(0)}%
-        </text>
-        <text x={64} y={80} textAnchor="middle" fill={C.muted} fontSize={9}>
-          Detection
-        </text>
-        <text x={64} y={92} textAnchor="middle" fill={C.muted} fontSize={9}>
-          readiness
-        </text>
-      </svg>
+    <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
+      <NeonGauge value={pct} label="Detection readiness" color={color} />
     </div>
   );
 }
@@ -190,7 +159,7 @@ function SigmaRuleViewer({ rules, analysisId }: { rules: SigmaRule[]; analysisId
           <SyntaxHighlighter
             language="yaml"
             style={atomOneDark}
-            customStyle={{ margin: 0, fontSize: 11, maxHeight: 260, overflowY: "auto", background: C.raised }}
+            customStyle={{ margin: 0, fontSize: 11, maxHeight: 260, overflowY: "auto", background: "#000000" }}
           >
             {rule.yaml}
           </SyntaxHighlighter>
@@ -198,7 +167,7 @@ function SigmaRuleViewer({ rules, analysisId }: { rules: SigmaRule[]; analysisId
           <SyntaxHighlighter
             language="sql"
             style={atomOneDark}
-            customStyle={{ margin: 0, fontSize: 11, maxHeight: 260, overflowY: "auto", background: C.raised }}
+            customStyle={{ margin: 0, fontSize: 11, maxHeight: 260, overflowY: "auto", background: "#000000" }}
           >
             {rule.conversions[activeConv] ?? ""}
           </SyntaxHighlighter>

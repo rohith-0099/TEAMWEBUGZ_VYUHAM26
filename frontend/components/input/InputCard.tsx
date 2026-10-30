@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, createAnalysis } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { FileText, Link2, Loader2, Sparkles, UploadCloud } from "lucide-react";
+import { FileText, Link2, Loader2, UploadCloud } from "lucide-react";
 
 const MAX_PDF_BYTES = 20 * 1024 * 1024;
 const MIN_TEXT_CHARS = 200;
@@ -87,7 +87,7 @@ export function InputCard() {
   }
 
   return (
-    <Card className="glow-primary border-primary/20 bg-card/90 backdrop-blur" onKeyDown={onKeyDown}>
+    <Card className=" border-primary/20 bg-card" onKeyDown={onKeyDown}>
       <CardContent className="flex flex-col gap-4 pt-2">
         <Tabs value={tab} onValueChange={(v) => setTab(String(v))}>
           <TabsList className="grid w-full grid-cols-3">
@@ -148,7 +148,7 @@ export function InputCard() {
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Sparkles className="size-3" aria-hidden="true" /> Try a sample:
+            Try a sample:
           </span>
           {SAMPLE_CHIPS.map((chip) => (
             <button

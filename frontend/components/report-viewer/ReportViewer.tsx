@@ -154,7 +154,7 @@ export function ReportViewer() {
               <span className="size-2 rounded-full bg-primary" /> Technique
             </span>
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full border border-dashed border-teal-400" /> IOC
+              <span className="size-2 rounded-full border border-dashed border-observed/40" /> IOC
             </span>
             <span className="flex items-center gap-1">
               <span className="size-2 rounded-full bg-destructive" /> Injected
@@ -164,7 +164,7 @@ export function ReportViewer() {
 
         <div
           ref={textRef}
-          className="rounded-xl border bg-card/70 p-5 font-mono text-xs leading-relaxed text-foreground/90 shadow-sm whitespace-pre-wrap selection:bg-primary/30"
+          className="rounded-[20px] border bg-card p-5 font-mono text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap selection:bg-primary/30"
         >
           {segments.map((seg, idx) => {
             const isTech = Boolean(seg.meta.technique);
@@ -186,11 +186,11 @@ export function ReportViewer() {
                     : ""
                 } ${
                   isSelected
-                    ? "ring-1 ring-primary brightness-110 shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+                    ? "ring-1 ring-primary brightness-110"
                     : ""
                 } ${
                   seg.meta.isIoc
-                    ? "border-b border-dotted border-teal-400/90 text-teal-300"
+                    ? "border-b border-dotted border-observed/40 text-observed"
                     : ""
                 } ${
                   seg.meta.isInjection
@@ -240,7 +240,7 @@ export function ReportViewer() {
         </div>
 
         {selectedTechnique ? (
-          <div className="sticky top-20 flex flex-col gap-4 rounded-xl border bg-card/80 p-4 shadow-sm backdrop-blur">
+          <div className="sticky top-20 flex flex-col gap-4 rounded-[20px] border bg-card p-4">
             <div className="flex items-start justify-between gap-2 border-b pb-3">
               <div className="flex flex-col gap-1">
                 <span className="font-mono text-sm font-bold text-primary">
@@ -251,7 +251,7 @@ export function ReportViewer() {
                 </h4>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {selectedTechnique.tactics.map((t) => (
-                    <Badge key={t} variant="secondary" className="font-mono text-[9px] uppercase">
+                    <Badge key={t} variant="secondary" className="font-mono text-[9px]">
                       {getName(t)}
                     </Badge>
                   ))}
@@ -274,7 +274,7 @@ export function ReportViewer() {
             {/* Evidence Quote with Jump Button */}
             {selectedTechnique.evidence && (
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-xs font-semibold text-muted-foreground">
                   Verbatim Source Evidence
                 </span>
                 <blockquote className="rounded-md border-l-2 border-primary bg-muted/20 p-3 font-mono text-xs italic text-foreground">
@@ -301,7 +301,7 @@ export function ReportViewer() {
             {/* Verifier Rationale */}
             {selectedTechnique.rationale && (
               <div className="flex flex-col gap-1.5 border-t pt-3">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-xs font-semibold text-muted-foreground">
                   Verifier Rationale
                 </span>
                 <p className="text-xs leading-relaxed text-foreground/90">
@@ -313,7 +313,7 @@ export function ReportViewer() {
             {/* Linked Indicators */}
             {selectedTechnique.linked_iocs.length > 0 && (
               <div className="flex flex-col gap-1.5 border-t pt-3">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-xs font-semibold text-muted-foreground">
                   Associated Indicators
                 </span>
                 <div className="flex flex-wrap gap-1">
@@ -327,7 +327,7 @@ export function ReportViewer() {
             )}
           </div>
         ) : (
-          <div className="flex h-48 items-center justify-center rounded-xl border border-dashed text-xs text-muted-foreground">
+          <div className="flex h-48 items-center justify-center rounded-[20px] border border-dashed text-xs text-muted-foreground">
             Click any highlighted text to inspect evidence.
           </div>
         )}

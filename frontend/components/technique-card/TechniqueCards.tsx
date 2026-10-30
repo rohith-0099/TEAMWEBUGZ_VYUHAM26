@@ -150,7 +150,7 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
                   className="size-2.5 rounded-full"
                   style={{ backgroundColor: color }}
                 />
-                <h3 className="font-heading text-xs font-semibold tracking-wide uppercase text-foreground">
+                <h3 className="font-heading text-xs font-semibold tracking-wide text-foreground">
                   {tacticName}
                 </h3>
                 <span className="font-mono text-[11px] text-muted-foreground">
@@ -173,9 +173,9 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
                     <div
                       key={tech.technique_id}
                       onClick={() => selectTechnique(tech.technique_id)}
-                      className={`flex flex-col gap-2 rounded-lg border bg-card/70 p-3.5 shadow-sm transition-all hover:border-primary/60 hover:shadow-md ${
+                      className={`flex flex-col gap-2 rounded-lg border bg-card p-3.5 transition-all hover:border-primary/60 hover: ${
                         isSelected
-                          ? "border-primary ring-1 ring-primary/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+                          ? "border-primary ring-1 ring-primary/50"
                           : "border-border/60"
                       }`}
                     >
@@ -194,7 +194,7 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
                             {tech.tactics.map((tShort) => (
                               <span
                                 key={tShort}
-                                className="rounded px-1.5 py-0.5 text-[9px] font-mono uppercase text-muted-foreground bg-muted/30"
+                                className="rounded px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground bg-muted/30"
                               >
                                 {byShortname[tShort]?.name || tShort}
                               </span>
@@ -273,7 +273,7 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
                           <Button
                             variant="ghost"
                             size="sm"
-                            className={`size-6 p-0 ${feedbackGiven[tech.technique_id] === "accept" ? "text-emerald-400 bg-emerald-950/40" : "text-muted-foreground"}`}
+                            className={`size-6 p-0 ${feedbackGiven[tech.technique_id] === "accept" ? "text-success bg-success/10" : "text-muted-foreground"}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleFeedback(tech.technique_id, "accept");
@@ -307,11 +307,11 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
 
       {/* Rejected / Hallucinations Blocked Section */}
       {showRejected && rejected.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+        <div className="flex flex-col gap-2 rounded-[20px] border border-destructive/40 bg-destructive/5 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertOctagon className="size-4 text-destructive" />
-              <h3 className="font-heading text-xs font-semibold uppercase text-destructive">
+              <h3 className="font-heading text-xs font-semibold text-destructive">
                 Hallucinated / Rejected Candidates Filtered ({rejected.length})
               </h3>
             </div>
@@ -355,13 +355,13 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
 
       {/* Prediction indicator link */}
       {predictions.length > 0 && onSelectTab && (
-        <div className="rounded-lg border border-purple-900/40 bg-purple-950/20 p-3">
+        <div className="rounded-lg border border-predicted/40 bg-predicted/10 p-3">
           <button
             onClick={() => onSelectTab("flow")}
-            className="flex w-full items-center justify-between text-xs text-purple-300 hover:text-purple-200"
+            className="flex w-full items-center justify-between text-xs text-predicted hover:text-predicted"
           >
             <span className="font-medium">
-              ⚡ {predictions.length} Predicted ghost techniques to hunt for
+              {predictions.length} Predicted ghost techniques to hunt for
             </span>
             <span className="flex items-center gap-1 font-mono text-[11px]">
               Explore in Attack Flow <ArrowRight className="size-3" />

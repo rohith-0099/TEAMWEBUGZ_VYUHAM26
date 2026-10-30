@@ -94,13 +94,31 @@ def _load_from_db() -> bool:
                     txt = row["text"] if isinstance(row, dict) else row[1]
                     _PROCEDURE_EXAMPLES.setdefault(tid, []).append(txt)
 
-                # Revoked/deprecated objects
-                cur.execute("SELECT attack_id FROM attack_objects WHERE deprecated = true OR revoked = true")
+                # Revoked/deprecated techniques only: old mitigations reuse T-numbers, so
+                # counting them would mark 95 active techniques as deprecated.
+                cur.execute(
+                    """SELECT attack_id FROM attack_objects
+                       WHERE type = 'attack-pattern' AND (deprecated = true OR revoked = true)"""
+                )
                 _DEPRECATED_OR_REVOKED.clear()
                 for row in cur.fetchall():
                     aid = row["attack_id"] if isinstance(row, dict) else row[0]
                     if aid:
                         _DEPRECATED_OR_REVOKED.add(aid)
+
+                cur.execute(
+                    """SELECT src.attack_id AS old_id, tgt.attack_id AS new_id
+                       FROM attack_relationships r
+                       JOIN attack_objects src ON src.stix_id = r.source_ref
+                       JOIN attack_objects tgt ON tgt.stix_id = r.target_ref
+                       WHERE r.relationship_type = 'revoked-by' AND src.type = 'attack-pattern'"""
+                )
+                _REVOCATIONS.clear()
+                for row in cur.fetchall():
+                    old_id = row["old_id"] if isinstance(row, dict) else row[0]
+                    new_id = row["new_id"] if isinstance(row, dict) else row[1]
+                    if old_id and new_id:
+                        _REVOCATIONS.setdefault(old_id, []).append(new_id)
 
         return True
     except Exception:

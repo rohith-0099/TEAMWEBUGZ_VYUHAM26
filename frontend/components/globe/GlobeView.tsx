@@ -99,8 +99,8 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#07090D",
-          color: "#8B95A5",
+          background: "#000000",
+          color: "#8A8A93",
           fontFamily: "var(--font-sans, Inter, sans-serif)",
         }}
       >
@@ -117,8 +117,8 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#07090D",
-          color: "#8B95A5",
+          background: "#000000",
+          color: "#8A8A93",
           fontFamily: "var(--font-sans, Inter, sans-serif)",
         }}
       >
@@ -145,12 +145,12 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
             position: "absolute",
             left: tooltip.x + 12,
             top: tooltip.y - 10,
-            background: "#0E1117EE",
-            border: "1px solid #232A35",
+            background: "#0A0A0AEE",
+            border: "1px solid #1F1F1F",
             borderRadius: 6,
             padding: "6px 10px",
             fontSize: 11,
-            color: "#E6EDF3",
+            color: "#F5F5F7",
             pointerEvents: "none",
             fontFamily: "var(--font-sans, Inter, sans-serif)",
             zIndex: 10,
@@ -159,14 +159,14 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
           <div
             style={{
               fontFamily: "var(--font-mono, monospace)",
-              color: "#22D3EE",
+              color: "#22F0FF",
               marginBottom: 2,
             }}
           >
             {tooltip.point.display}
           </div>
           <div>{tooltip.point.country}{tooltip.point.city ? ` · ${tooltip.point.city}` : ""}</div>
-          <div style={{ color: "#8B95A5", marginTop: 2 }}>Role: {tooltip.point.role}</div>
+          <div style={{ color: "#8A8A93", marginTop: 2 }}>Role: {tooltip.point.role}</div>
         </div>
       )}
 
@@ -176,8 +176,8 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
           position: "absolute",
           bottom: 12,
           left: 12,
-          background: "#0E1117EE",
-          border: "1px solid #232A35",
+          background: "#0A0A0AEE",
+          border: "1px solid #1F1F1F",
           borderRadius: 6,
           padding: "8px 10px",
           display: "flex",
@@ -197,7 +197,7 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
                 background: `rgba(${rgba[0]},${rgba[1]},${rgba[2]},0.9)`,
               }}
             />
-            <span style={{ color: "#8B95A5", textTransform: "capitalize" }}>{role}</span>
+            <span style={{ color: "#8A8A93", textTransform: "capitalize" }}>{role}</span>
           </div>
         ))}
       </div>
@@ -209,8 +209,8 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
           bottom: 12,
           right: 12,
           fontSize: 9,
-          color: "#8B95A5",
-          background: "#0E1117CC",
+          color: "#8A8A93",
+          background: "#0A0A0ACC",
           borderRadius: 4,
           padding: "3px 6px",
           zIndex: 10,

@@ -7,7 +7,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Background,
   Controls,
+  Handle,
   MiniMap,
+  Position,
   ReactFlow,
   ReactFlowProvider,
   addEdge,
@@ -15,6 +17,7 @@ import {
   useNodesState,
   type Connection,
   type Edge,
+  type ReactFlowInstance,
   type Node,
   type NodeTypes,
 } from "@xyflow/react";
@@ -23,33 +26,34 @@ import dagre from "@dagrejs/dagre";
 import { AnimatePresence, motion } from "framer-motion";
 import type { FlowNode as FlowNodeData, IOC, ReportAnalysis, TechniqueMatch } from "@/lib/types";
 import { simulate } from "@/lib/api";
-import { tacticColor } from "@/lib/tactics";
+import { useTactics } from "@/lib/tactics";
+import { TacticEdge } from "./TacticEdge";
 
 // ─── colours (§11) ───────────────────────────────────────────────────────────
 const C = {
-  observed: "#22D3EE",
+  observed: "#22F0FF",
   predicted: "#A78BFA",
-  unknown: "#8B95A5",
-  danger: "#F87171",
-  warning: "#FBBF24",
-  success: "#34D399",
-  bg: "#07090D",
-  surface: "#0E1117",
-  raised: "#151A22",
-  border: "#232A35",
-  text: "#E6EDF3",
-  muted: "#8B95A5",
+  unknown: "#8A8A93",
+  danger: "#FF3B5C",
+  warning: "#FFC53D",
+  success: "#39FF88",
+  bg: "#000000",
+  surface: "#0A0A0A",
+  raised: "#141414",
+  border: "#1F1F1F",
+  text: "#F5F5F7",
+  muted: "#8A8A93",
 };
 
 const IOC_ROLE_COLOR: Record<string, string> = {
-  c2: "#F87171",
-  payload: "#FB923C",
-  phishing: "#FBBF24",
-  exfil: "#E879F9",
-  victim: "#60A5FA",
-  scanner: "#94A3B8",
-  infrastructure: "#2DD4BF",
-  unknown: "#64748B",
+  c2: "#FF3B5C",
+  payload: "#FF8A1F",
+  phishing: "#FFC53D",
+  exfil: "#D14DFF",
+  victim: "#3B6BFF",
+  scanner: "#8A8A93",
+  infrastructure: "#22E8A0",
+  unknown: "#5A5A63",
 };
 
 // ─── node dimensions ─────────────────────────────────────────────────────────
@@ -57,6 +61,11 @@ const NODE_W = 220;
 const NODE_H = 90;
 
 // ─── dagre layout ────────────────────────────────────────────────────────────
+const EDGE_TYPES = { tactic: TacticEdge };
+const MAX_ROW_COLUMNS = 8;
+const ROW_GAP = 90;
+const FIT_VIEW = { padding: 0.15, maxZoom: 1 };
+
 function applyDagre(nodes: Node[], edges: Edge[]) {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
@@ -64,10 +73,33 @@ function applyDagre(nodes: Node[], edges: Edge[]) {
   nodes.forEach((n) => g.setNode(n.id, { width: NODE_W, height: NODE_H }));
   edges.forEach((e) => g.setEdge(e.source, e.target));
   dagre.layout(g);
-  return nodes.map((n) => {
-    const { x, y } = g.node(n.id);
-    return { ...n, position: { x: x - NODE_W / 2, y: y - NODE_H / 2 } };
+  const placed = nodes.map((n) => {
+    const pos = g.node(n.id);
+    return { ...n, position: { x: pos.x - NODE_W / 2, y: pos.y - NODE_H / 2 } };
   });
+
+  // A kill chain runs to 14+ stages; on one line that's unreadable, so it wraps onto a second row.
+  const columns = [...new Set(placed.map((n) => n.position.x))].sort((a, b) => a - b);
+  if (columns.length <= MAX_ROW_COLUMNS) return placed;
+  const perRow = Math.ceil(columns.length / 2);
+  const bottom = Math.max(...placed.map((n) => n.position.y)) - Math.min(...placed.map((n) => n.position.y));
+  const rowOffset = bottom + NODE_H + ROW_GAP;
+  return placed.map((n) => {
+    const column = columns.indexOf(n.position.x);
+    if (column < perRow) return n;
+    return { ...n, position: { x: columns[column - perRow], y: n.position.y + rowOffset } };
+  });
+}
+
+// React Flow can't draw an edge without a handle at each end.
+function FlowPorts() {
+  const hidden = { opacity: 0, width: 1, height: 1, minWidth: 0, minHeight: 0, border: "none" };
+  return (
+    <>
+      <Handle type="target" position={Position.Left} isConnectable={false} style={hidden} />
+      <Handle type="source" position={Position.Right} isConnectable={false} style={hidden} />
+    </>
+  );
 }
 
 // ─── custom node components ───────────────────────────────────────────────────
@@ -107,6 +139,7 @@ function ObservedNode({ data }: { data: NodeExtraData }) {
         else if (technique && onOpenDetail) onOpenDetail(technique);
       }}
     >
+      <FlowPorts />
       {/* tactic colour strip */}
       <div
         style={{
@@ -186,13 +219,13 @@ function ObservedNode({ data }: { data: NodeExtraData }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "#F8717130",
+              background: "#FF3B5C30",
               borderRadius: 6,
               fontSize: 22,
               pointerEvents: "none",
             }}
           >
-            ⛔
+            ✕
           </div>
         )}
         {affected && !blocked && (
@@ -236,6 +269,7 @@ function PredictedNode({ data }: { data: NodeExtraData }) {
       }}
       title="Not in the report. Commonly seen with the observed techniques — check your logs."
     >
+      <FlowPorts />
       <div
         style={{
           position: "absolute",
@@ -297,7 +331,7 @@ function UnknownNode({ data }: { data: NodeExtraData }) {
         width: NODE_W,
         minHeight: NODE_H,
         background:
-          "repeating-linear-gradient(45deg, #151A22, #151A22 6px, #1a2030 6px, #1a2030 12px)",
+          "repeating-linear-gradient(45deg, #141414, #141414 6px, #1F1F1F 6px, #1F1F1F 12px)",
         border: `2px solid ${C.border}`,
         borderRadius: 8,
         opacity: 0.75,
@@ -307,6 +341,7 @@ function UnknownNode({ data }: { data: NodeExtraData }) {
       }}
       title="Gap in the intelligence — not an observation."
     >
+      <FlowPorts />
       <div style={{ fontSize: 9, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
         Gap — not observed
       </div>
@@ -447,7 +482,7 @@ function SimResultPanel({
         ✕
       </button>
       <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>
-        🛡 Simulation Result
+        Simulation result
       </div>
       {/* big % */}
       <motion.div
@@ -478,7 +513,7 @@ function SimResultPanel({
       {result.surviving_paths.length > 0 && (
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, color: C.warning, fontWeight: 600, marginBottom: 4 }}>
-            ⚠ Surviving paths ({result.surviving_paths.length})
+            Surviving paths ({result.surviving_paths.length})
           </div>
           {result.surviving_paths.slice(0, 3).map((p, i) => (
             <div
@@ -525,7 +560,7 @@ function SimResultPanel({
                     padding: "1px 5px",
                     borderRadius: 3,
                     background:
-                      cm.source === "d3fend" ? "#22D3EE22" : "#A78BFA22",
+                      cm.source === "d3fend" ? "#22F0FF22" : "#A78BFA22",
                     color: cm.source === "d3fend" ? C.observed : C.predicted,
                     border: `1px solid ${cm.source === "d3fend" ? C.observed : C.predicted}`,
                     fontWeight: 600,
@@ -539,7 +574,7 @@ function SimResultPanel({
                       fontSize: 9,
                       padding: "1px 5px",
                       borderRadius: 3,
-                      background: "#FBBF2422",
+                      background: "#FFC53D22",
                       color: C.warning,
                       border: `1px solid ${C.warning}`,
                     }}
@@ -569,40 +604,90 @@ function SimResultPanel({
   );
 }
 
-// ─── swimlane bands ───────────────────────────────────────────────────────────
-type Band = { tactic: string; x: number; width: number; color: string; ord: number };
-
-function computeBands(nodes: Node[]): Band[] {
-  const byTactic = new Map<string, { minX: number; maxX: number; ord: number }>();
-  for (const n of nodes) {
-    const tactic = (n.data as NodeExtraData).flowNode.tactic;
-    const ord = (n.data as NodeExtraData).flowNode.order;
-    const cur = byTactic.get(tactic);
-    const nx = n.position.x;
-    if (!cur) {
-      byTactic.set(tactic, { minX: nx, maxX: nx + NODE_W, ord });
-    } else {
-      byTactic.set(tactic, {
-        minX: Math.min(cur.minX, nx),
-        maxX: Math.max(cur.maxX, nx + NODE_W),
-        ord: Math.min(cur.ord, ord),
-      });
-    }
-  }
-  const bands: Band[] = [];
-  byTactic.forEach(({ minX, maxX, ord }, tactic) => {
-    bands.push({
-      tactic,
-      x: minX - 12,
-      width: maxX - minX + 24,
-      color: tacticColor(Math.round(ord / 100)),
-      ord,
-    });
-  });
-  bands.sort((a, b) => a.x - b.x);
-  return bands;
+// ─── predictions table (below canvas) ────────────────────────────────────────
+function PredictionsTable({ predictions }: { predictions: TechniqueMatch[] }) {
+  if (predictions.length === 0) return null;
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.border}`,
+        borderRadius: 8,
+        padding: 16,
+        marginTop: 16,
+        fontFamily: "var(--font-sans, Inter, sans-serif)",
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10 }}>
+        Hunt for these{" "}
+        <span style={{ fontSize: 11, color: C.muted, fontWeight: 400 }}>
+          — Predicted, not observed
+        </span>
+      </div>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+            {["Technique", "Name", "Tactic", "Score", "Why?"].map((h) => (
+              <th
+                key={h}
+                style={{ textAlign: "left", fontSize: 10, color: C.muted, padding: "4px 8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {predictions.map((p) => (
+            <tr key={p.technique_id} style={{ borderBottom: `1px solid ${C.border}20` }}>
+              <td style={{ padding: "6px 8px", fontFamily: "var(--font-mono, monospace)", fontSize: 11, color: C.predicted }}>
+                {p.technique_id}
+              </td>
+              <td style={{ padding: "6px 8px", fontSize: 12, color: C.text }}>
+                {p.name}
+              </td>
+              <td style={{ padding: "6px 8px", fontSize: 11, color: C.muted }}>
+                {p.tactics[0] ?? "—"}
+              </td>
+              <td style={{ padding: "6px 8px", minWidth: 80 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ flex: 1, height: 4, background: C.border, borderRadius: 2, overflow: "hidden" }}>
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${(p.prediction_score ?? 0) * 100}%`,
+                        background: C.predicted,
+                        borderRadius: 2,
+                      }}
+                    />
+                  </div>
+                  <span style={{ fontSize: 10, color: C.predicted, minWidth: 28 }}>
+                    {((p.prediction_score ?? 0) * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </td>
+              <td style={{ padding: "6px 8px" }}>
+                <span
+                  title={p.rationale}
+                  style={{
+                    fontSize: 10,
+                    color: C.muted,
+                    cursor: "help",
+                    borderBottom: `1px dashed ${C.muted}`,
+                  }}
+                >
+                  Why?
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
+// ─── public export ────────────────────────────────────────────────────────────
 // ─── main inner component (needs ReactFlowProvider wrapper) ──────────────────
 function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
   const flow = analysis.flow ?? { nodes: [], edges: [] };
@@ -724,7 +809,11 @@ function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
 
   const rawNodes = useMemo(() => buildRfNodes(affectedSet), [buildRfNodes, affectedSet]);
 
+  const { tactics, getColor } = useTactics();
+  const flowInstance = useRef<ReactFlowInstance | null>(null);
+
   const rfEdges: Edge[] = useMemo(() => {
+    const tacticOf = (id: string) => flow.nodes.find((n) => n.id === id)?.tactic ?? "";
     return flow.edges
       .filter((e) => visibleIds.has(e.source) && visibleIds.has(e.target))
       .map((e) => {
@@ -739,20 +828,27 @@ function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
           id: `${e.source}-${e.target}`,
           source: e.source,
           target: e.target,
+          type: "tactic",
           animated: isSurviving,
+          data: { from: getColor(tacticOf(e.source)), to: getColor(tacticOf(e.target)) },
           style: {
             strokeDasharray: isPredictedTarget || isInfra ? "6 3" : undefined,
-            stroke: isSurviving
-              ? C.warning
-              : isPredictedTarget
-              ? C.predicted
-              : C.observed,
+            // Otherwise TacticEdge paints a gradient between the two tactics.
+            stroke: isSurviving ? C.warning : isPredictedTarget ? C.predicted : undefined,
             strokeWidth: e.relation === "enables" ? 3 : 2,
             opacity: affectedSet.has(e.target) ? 0.3 : 1,
           },
         };
       });
-  }, [flow.edges, flow.nodes, visibleIds, simResult, affectedSet]);
+    // getColor changes only when the tactic list loads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flow.edges, flow.nodes, visibleIds, simResult, affectedSet, tactics]);
+
+  // The flow builds node by node, so keep the whole graph framed as it grows.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => flowInstance.current?.fitView({ ...FIT_VIEW, duration: 250 }));
+    return () => cancelAnimationFrame(frame);
+  }, [visibleIds.size]);
 
   // dagre layout
   const layoutNodes = useMemo(() => applyDagre(rawNodes, rfEdges), [rawNodes, rfEdges]);
@@ -774,7 +870,6 @@ function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
   );
 
   // swimlane bands (computed after layout)
-  const bands = useMemo(() => computeBands(rfNodes), [rfNodes]);
 
   // ── simulate API call ──────────────────────────────────────────────────────
   const analysisId = analysis.report_id ?? "mock-report";
@@ -915,7 +1010,7 @@ function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
             fontWeight: simMode ? 700 : 400,
           }}
         >
-          🛡 {simMode ? "Exit Sim" : "Simulate defence"}
+          {simMode ? "Exit simulation" : "Simulate defence"}
         </button>
         {simMode && (
           <button
@@ -957,7 +1052,7 @@ function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
             maxWidth: 340,
           }}
         >
-          🏆 Best single block:{" "}
+          Best single block:{" "}
           <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 700 }}>
             {bestBlock.label}
           </span>{" "}
@@ -973,48 +1068,25 @@ function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        edgeTypes={EDGE_TYPES}
         fitView
+        fitViewOptions={FIT_VIEW}
+        minZoom={0.2}
+        onInit={(instance) => {
+          flowInstance.current = instance;
+        }}
+        colorMode="dark"
         proOptions={{ hideAttribution: true }}
-        style={{ background: C.bg }}
+        style={{ background: C.bg, "--xy-background-color": C.bg } as React.CSSProperties}
         defaultEdgeOptions={{ animated: false }}
       >
-        {/* swimlane background bands */}
-        <svg
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
-        >
-          {bands.map((b) => (
-            <g key={b.tactic}>
-              <rect
-                x={b.x + (rfNodes[0]?.position?.x ?? 0) * 0 /* transform handled by RF viewport */}
-                y={0}
-                width={b.width}
-                height="100%"
-                fill={`${b.color}08`}
-                stroke={`${b.color}20`}
-                strokeWidth={1}
-                rx={4}
-              />
-              <text
-                x={b.x + b.width / 2}
-                y={18}
-                textAnchor="middle"
-                fill={`${b.color}80`}
-                fontSize={9}
-                style={{ userSelect: "none" }}
-              >
-                {b.tactic}
-              </text>
-            </g>
-          ))}
-        </svg>
-        <Background color={C.border} gap={24} />
+        <Background color={C.border} gap={24} bgColor={C.bg} />
         <Controls />
         <MiniMap
-          nodeColor={(n) => {
-            const kind = (n.data as NodeExtraData)?.flowNode?.kind;
-            return kind === "observed" ? C.observed : kind === "predicted" ? C.predicted : C.muted;
-          }}
-          style={{ background: C.surface }}
+          bgColor="#0A0A0A"
+          maskColor="#000000B3"
+          nodeColor={(n) => (n.type === "predicted" ? C.predicted : n.type === "unknown" ? C.unknown : C.observed)}
+          style={{ border: `1px solid ${C.border}` }}
         />
       </ReactFlow>
 
@@ -1055,90 +1127,6 @@ function FlowInner({ analysis }: { analysis: Partial<ReportAnalysis> }) {
   );
 }
 
-// ─── predictions table (below canvas) ────────────────────────────────────────
-function PredictionsTable({ predictions }: { predictions: TechniqueMatch[] }) {
-  if (predictions.length === 0) return null;
-  return (
-    <div
-      style={{
-        background: C.surface,
-        border: `1px solid ${C.border}`,
-        borderRadius: 8,
-        padding: 16,
-        marginTop: 16,
-        fontFamily: "var(--font-sans, Inter, sans-serif)",
-      }}
-    >
-      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10 }}>
-        🎯 Hunt for these{" "}
-        <span style={{ fontSize: 11, color: C.muted, fontWeight: 400 }}>
-          — Predicted, not observed
-        </span>
-      </div>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-            {["Technique", "Name", "Tactic", "Score", "Why?"].map((h) => (
-              <th
-                key={h}
-                style={{ textAlign: "left", fontSize: 10, color: C.muted, padding: "4px 8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {predictions.map((p) => (
-            <tr key={p.technique_id} style={{ borderBottom: `1px solid ${C.border}20` }}>
-              <td style={{ padding: "6px 8px", fontFamily: "var(--font-mono, monospace)", fontSize: 11, color: C.predicted }}>
-                {p.technique_id}
-              </td>
-              <td style={{ padding: "6px 8px", fontSize: 12, color: C.text }}>
-                {p.name}
-              </td>
-              <td style={{ padding: "6px 8px", fontSize: 11, color: C.muted }}>
-                {p.tactics[0] ?? "—"}
-              </td>
-              <td style={{ padding: "6px 8px", minWidth: 80 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ flex: 1, height: 4, background: C.border, borderRadius: 2, overflow: "hidden" }}>
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${(p.prediction_score ?? 0) * 100}%`,
-                        background: C.predicted,
-                        borderRadius: 2,
-                      }}
-                    />
-                  </div>
-                  <span style={{ fontSize: 10, color: C.predicted, minWidth: 28 }}>
-                    {((p.prediction_score ?? 0) * 100).toFixed(0)}%
-                  </span>
-                </div>
-              </td>
-              <td style={{ padding: "6px 8px" }}>
-                <span
-                  title={p.rationale}
-                  style={{
-                    fontSize: 10,
-                    color: C.muted,
-                    cursor: "help",
-                    borderBottom: `1px dashed ${C.muted}`,
-                  }}
-                >
-                  Why?
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ─── public export ────────────────────────────────────────────────────────────
 export function AttackFlowView({ analysis }: { analysis: Partial<ReportAnalysis> }) {
   return (
     <div>

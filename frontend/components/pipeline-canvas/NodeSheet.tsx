@@ -45,7 +45,7 @@ export function NodeSheet({ stageId, status, ms, lastData, open, onOpenChange }:
         <SheetHeader className="border-b pb-4">
           <div className="flex items-center justify-between gap-2">
             <SheetTitle className="font-heading text-lg font-semibold">{meta.name}</SheetTitle>
-            <Badge variant="outline" className="font-mono text-xs uppercase">
+            <Badge variant="outline" className="font-mono text-xs">
               {meta.kind}
             </Badge>
           </div>
@@ -55,7 +55,7 @@ export function NodeSheet({ stageId, status, ms, lastData, open, onOpenChange }:
           <div className="mt-2 flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1.5 font-medium">
               Status:{" "}
-              <span className={status === "done" ? "text-emerald-400" : status === "started" || status === "progress" ? "text-primary animate-pulse" : "text-muted-foreground"}>
+              <span className={status === "done" ? "text-success" : status === "started" || status === "progress" ? "text-primary animate-pulse" : "text-muted-foreground"}>
                 {status ?? "idle"}
               </span>
             </span>
@@ -68,7 +68,7 @@ export function NodeSheet({ stageId, status, ms, lastData, open, onOpenChange }:
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-2 overflow-hidden py-4">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <span className="text-xs font-semibold text-muted-foreground">
             Last Streamed Payload
           </span>
           <ScrollArea className="flex-1 rounded-md border bg-muted/20 p-3 font-mono text-[11px]">

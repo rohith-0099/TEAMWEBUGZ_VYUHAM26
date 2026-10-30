@@ -4,22 +4,23 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Ridgeline } from "@/components/charts";
 import { getEval } from "@/lib/api";
 import type { EvalResponse } from "@/lib/types";
 
 // ─── colours ──────────────────────────────────────────────────────────────────
 const C = {
-  bg: "#07090D",
-  surface: "#0E1117",
-  raised: "#151A22",
-  border: "#232A35",
-  text: "#E6EDF3",
-  muted: "#8B95A5",
-  observed: "#22D3EE",
+  bg: "#000000",
+  surface: "#0A0A0A",
+  raised: "#141414",
+  border: "#1F1F1F",
+  text: "#F5F5F7",
+  muted: "#8A8A93",
+  observed: "#22F0FF",
   predicted: "#A78BFA",
-  success: "#34D399",
-  warning: "#FBBF24",
-  danger: "#F87171",
+  success: "#39FF88",
+  warning: "#FFC53D",
+  danger: "#FF3B5C",
 };
 
 // ─── animated bar ─────────────────────────────────────────────────────────────
@@ -54,6 +55,11 @@ function MetricBar({
   );
 }
 
+function reportF1({ tp, fp, fn }: { tp: string[]; fp: string[]; fn: string[] }): number {
+  const denominator = 2 * tp.length + fp.length + fn.length;
+  return denominator ? (2 * tp.length) / denominator : 0;
+}
+
 // ─── system card ──────────────────────────────────────────────────────────────
 function SystemCard({
   system,
@@ -71,22 +77,21 @@ function SystemCard({
       style={{
         background: C.surface,
         border: `1px solid ${isTrinetra ? C.observed : C.border}`,
-        borderRadius: 10,
+        borderRadius: 20,
         padding: 20,
         flex: 1,
         minWidth: 240,
-        boxShadow: isTrinetra ? `0 0 16px ${C.observed}30` : undefined,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <span style={{ fontSize: 22 }}>{isTrinetra ? "🔺" : "🤖"}</span>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color }}>
-            {isTrinetra ? "TRINETRA" : "Plain LLM (Baseline)"}
+          <div style={{ fontSize: 15, fontWeight: 600, color: isTrinetra ? C.observed : C.text }}>
+            {isTrinetra ? "TRINETRA" : "Plain LLM"}
           </div>
-          <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            {system.system}
+          <div style={{ fontFamily: "var(--font-geist-mono)", fontSize: 64, lineHeight: 1.1, color, fontVariantNumeric: "tabular-nums" }}>
+            {system.f1.toFixed(2)}
           </div>
+          <div style={{ fontSize: 12, color: C.muted }}>F1 score</div>
         </div>
         {diff !== 0 && (
           <div
@@ -107,8 +112,7 @@ function SystemCard({
       </div>
       <MetricBar value={system.precision} color={color} label="Precision" />
       <MetricBar value={system.recall} color={color} label="Recall" />
-      <MetricBar value={system.f1} color={color} label="F1 score" />
-      <MetricBar value={system.parent_f1} color={`${color}BB`} label="Parent-level F1" />
+            <MetricBar value={system.parent_f1} color={`${color}BB`} label="Parent-level F1" />
       <div style={{ marginTop: 10, fontSize: 11, color: C.muted }}>
         Avg latency:{" "}
         <span style={{ color: C.text, fontFamily: "var(--font-mono, monospace)" }}>
@@ -333,10 +337,11 @@ export function ScoreboardPage() {
           minHeight: "100vh",
           padding: 24,
           fontFamily: "var(--font-sans, Inter, sans-serif)",
-          color: C.danger,
+          color: C.text,
         }}
       >
-        {error ?? "No evaluation data available."}{" "}
+        <h1 className="console-title">Scoreboard</h1>
+        No evaluation has been run yet.
         {!evalData && (
           <div style={{ color: C.muted, fontSize: 12, marginTop: 8 }}>
             Run{" "}
@@ -385,10 +390,9 @@ export function ScoreboardPage() {
             fontWeight: 700,
             marginBottom: 16,
             textAlign: "center",
-            letterSpacing: "0.05em",
           }}
         >
-          ⚠ MOCK DATA — These numbers are for development only. Run the real eval before the demo.
+          Mock data. These numbers are for development only. Run the real eval before the demo.
         </div>
       )}
 
@@ -405,7 +409,7 @@ export function ScoreboardPage() {
           Measured, not claimed.
         </div>
         <div style={{ fontSize: 14, color: C.muted }}>
-          {evalData.reports} report{evalData.reports !== 1 ? "s" : ""} evaluated ·{" "}
+          {evalData.reports} report{evalData.reports !== 1 ? "s" : ""} evaluated,{" "}
           <span style={{ fontFamily: "var(--font-mono, monospace)", color: C.muted }}>
             {new Date(evalData.ran_at).toLocaleString()}
           </span>
@@ -437,18 +441,9 @@ export function ScoreboardPage() {
         }}
       >
         {[
-          {
-            icon: "📋",
-            label: "Ground truth = ATT&CK tables published in CISA advisories",
-          },
-          {
-            icon: "🎯",
-            label: "Precision = how many claimed techniques were right",
-          },
-          {
-            icon: "🔍",
-            label: "Recall = how many real techniques we found",
-          },
+          { label: "Ground truth = ATT&CK tables published in CISA advisories" },
+          { label: "Precision = how many claimed techniques were right" },
+          { label: "Recall = how many real techniques we found" },
         ].map((item) => (
           <div
             key={item.label}
@@ -464,11 +459,22 @@ export function ScoreboardPage() {
               alignItems: "flex-start",
             }}
           >
-            <span style={{ fontSize: 20 }}>{item.icon}</span>
             <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.4 }}>{item.label}</span>
           </div>
         ))}
       </div>
+
+      {/* score distribution */}
+      <section className="mb-6 flex flex-col gap-3 rounded-[20px] border bg-card p-4">
+        <h2 className="console-title">F1 across reports</h2>
+        <Ridgeline
+          ariaLabel="Distribution of per-report F1 scores for the plain LLM and for TRINETRA"
+          rows={[
+            { key: "baseline", label: "Plain LLM", color: "#8A8A93", samples: evalData.per_report.map((r) => reportF1(r.baseline)) },
+            { key: "trinetra", label: "TRINETRA", color: "#22F0FF", samples: evalData.per_report.map((r) => reportF1(r.trinetra)) },
+          ]}
+        />
+      </section>
 
       {/* per-report table */}
       <div
@@ -489,8 +495,6 @@ export function ScoreboardPage() {
             fontSize: 10,
             color: C.muted,
             fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
           }}
         >
           <span style={{ flex: 1 }}>Report</span>

@@ -35,7 +35,7 @@ def provider(monkeypatch, llm_on):
     store = {}
     monkeypatch.setattr(llm, "_cache_get", store.get)
     monkeypatch.setattr(llm, "_cache_put", store.__setitem__)
-    monkeypatch.setattr(llm, "RATE_LIMIT_BACKOFF_S", (0, 0))
+    monkeypatch.setattr(llm, "RATE_LIMIT_BACKOFF_S", (0, 0, 0, 0, 0))
     return SimpleNamespace(calls=calls, script=script, cache=store)
 
 
@@ -75,7 +75,7 @@ async def test_rate_limit_backs_off_then_succeeds(provider):
 
 async def test_rate_limit_gives_up_with_llm_error(provider):
     limited = litellm.RateLimitError("slow down", llm_provider="test", model="m")
-    provider.script += [limited, limited, limited]
+    provider.script += [limited] * 6
     with pytest.raises(llm.LLMError):
         await llm.complete_json("s", "u", Out)
 
@@ -110,3 +110,16 @@ async def test_missing_model_name_is_a_clear_error(provider, monkeypatch):
 async def test_complete_text_returns_raw_content(provider):
     provider.script.append("plain words")
     assert await llm.complete_text("s", "u") == "plain words"
+
+
+async def test_comment_in_api_base_is_not_used_as_a_url(provider, monkeypatch):
+    monkeypatch.setattr(settings, "llm_api_base", "# optional, for OpenAI-compatible endpoints")
+    provider.script.append("ok")
+    await llm.complete_text("s", "u")
+    assert provider.calls[0]["api_base"] is None
+
+
+def test_retry_delay_follows_the_provider_hint():
+    assert 20 < llm._retry_delay(Exception("Please try again in 20.49s."), 2) < 23
+    assert llm._retry_delay(Exception("Please try again in 3m0s."), 2) == llm.MAX_RATE_LIMIT_WAIT_S
+    assert llm._retry_delay(Exception("slow down"), 4) == 4

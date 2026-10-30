@@ -22,9 +22,11 @@ import {
   ShieldAlert,
   Sparkles,
 } from "lucide-react";
+import { BracketChip } from "@/components/charts";
+import { tacticColor } from "@/lib/tactics";
 import { cn } from "@/lib/utils";
 import type { StageName, StageStatus } from "@/lib/types";
-import type { StageKind, StageMeta } from "./stages";
+import { STAGE_ORDER, type StageMeta } from "./stages";
 
 const STAGE_ICONS: Record<StageName, React.ElementType> = {
   ingest: FileSearch,
@@ -44,15 +46,6 @@ const STAGE_ICONS: Record<StageName, React.ElementType> = {
   pipeline: CheckCircle2,
 };
 
-const KIND_BADGES: Record<StageKind, { label: string; className: string }> = {
-  deterministic: { label: "deterministic", className: "bg-slate-800/80 text-slate-300 border-slate-700" },
-  LLM: { label: "LLM", className: "bg-purple-950/70 text-purple-300 border-purple-800" },
-  vector: { label: "vector", className: "bg-cyan-950/70 text-cyan-300 border-cyan-800" },
-  hybrid: { label: "hybrid", className: "bg-amber-950/70 text-amber-300 border-amber-800" },
-  graph: { label: "graph", className: "bg-teal-950/70 text-teal-300 border-teal-800" },
-  "ML model": { label: "ML model", className: "bg-pink-950/70 text-pink-300 border-pink-800" },
-  "LLM + rules": { label: "LLM + rules", className: "bg-indigo-950/70 text-indigo-300 border-indigo-800" },
-};
 
 export type PipelineNodeData = {
   meta: StageMeta;
@@ -66,47 +59,48 @@ export const PipelineNode = memo(function PipelineNode({ data }: NodeProps) {
   const nodeData = data as unknown as PipelineNodeData;
   const { meta, status, ms, onSelectNode } = nodeData;
   const Icon = STAGE_ICONS[meta.id] || Code2;
-  const kindBadge = KIND_BADGES[meta.kind];
+  const stageColor = tacticColor(STAGE_ORDER.indexOf(meta.id));
 
   const isRunning = status === "started" || status === "progress";
   const isDone = status === "done";
   const isError = status === "error";
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => onSelectNode(meta.id)}
+      aria-label={`${meta.name}: ${status}`}
+      style={{ "--stage-color": stageColor } as React.CSSProperties}
       className={cn(
-        "group relative flex w-[155px] cursor-pointer flex-col gap-1.5 rounded-lg border bg-card/90 p-2 text-xs shadow-sm backdrop-blur transition-all hover:border-primary/60 hover:shadow-md",
-        status === "idle" && "border-border/60 opacity-60 hover:opacity-100",
-        isRunning && "border-primary bg-primary/10 shadow-[0_0_15px_rgba(34,211,238,0.35)] ring-1 ring-primary/50 animate-pulse",
-        isDone && "border-emerald-600/70 bg-emerald-950/20 text-foreground",
-        isError && "border-destructive/80 bg-destructive/10 text-destructive",
+        "group relative flex w-[136px] cursor-pointer flex-col gap-1.5 rounded-lg border border-dotted border-white/50 bg-black p-2 text-left text-xs transition-colors hover:border-white",
+        status === "idle" && "border-white/25 text-muted-foreground",
+        isRunning && "stage-running",
+        isDone && "border-[var(--stage-color)]",
+        isError && "border-solid border-danger text-danger",
       )}
     >
       <Handle type="target" position={Position.Left} className="!size-1.5 !border-none !bg-muted-foreground/60" />
 
       <div className="flex items-center justify-between gap-1">
         <div className="flex items-center gap-1.5 truncate font-medium">
-          <Icon className={cn("size-3.5 shrink-0", isRunning && "text-primary animate-spin", isDone && "text-emerald-400", isError && "text-destructive")} />
+          <Icon className={cn("size-3.5 shrink-0", isRunning && "text-[var(--stage-color)]", isDone && "text-[var(--stage-color)]", isError && "text-destructive")} />
           <span className="truncate text-[11px] font-semibold">{meta.name}</span>
         </div>
         <div className="shrink-0">
-          {isRunning && <Loader2 className="size-3 animate-spin text-primary" />}
-          {isDone && <CheckCircle2 className="size-3 text-emerald-400" />}
+          {isRunning && <Loader2 className="size-3 animate-spin text-[var(--stage-color)]" />}
+          {isDone && <CheckCircle2 className="size-3 text-[var(--stage-color)]" />}
           {isError && <AlertTriangle className="size-3 text-destructive" />}
         </div>
       </div>
 
       <div className="flex items-center justify-between text-[10px]">
-        <span className={cn("rounded border px-1 py-0.2 text-[9px] font-mono uppercase tracking-wider", kindBadge.className)}>
-          {kindBadge.label}
-        </span>
+        <BracketChip>{meta.kind}</BracketChip>
         <span className="font-mono text-muted-foreground">
-          {ms !== undefined ? `${ms}ms` : isRunning ? "active" : "idle"}
+          {ms !== undefined ? `${(ms / 1000).toFixed(1)}s` : isRunning ? "active" : "idle"}
         </span>
       </div>
 
       <Handle type="source" position={Position.Right} className="!size-1.5 !border-none !bg-muted-foreground/60" />
-    </div>
+    </button>
   );
 });

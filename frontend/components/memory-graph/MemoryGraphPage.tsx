@@ -15,27 +15,30 @@ import { ContradictionCard } from "./ContradictionCard";
 
 // ─── colours ──────────────────────────────────────────────────────────────────
 const C = {
-  bg: "#07090D",
-  surface: "#0E1117",
-  raised: "#151A22",
-  border: "#232A35",
-  text: "#E6EDF3",
-  muted: "#8B95A5",
-  observed: "#22D3EE",
+  bg: "#000000",
+  surface: "#0A0A0A",
+  raised: "#141414",
+  border: "#1F1F1F",
+  text: "#F5F5F7",
+  muted: "#8A8A93",
+  observed: "#22F0FF",
   predicted: "#A78BFA",
-  danger: "#F87171",
-  warning: "#FBBF24",
-  success: "#34D399",
+  danger: "#FF3B5C",
+  warning: "#FFC53D",
+  success: "#39FF88",
 };
 
 const NODE_TYPE_COLOR: Record<string, string> = {
-  report: "#E6EDF3",
-  ioc: "#22D3EE",
+  report: "#F5F5F7",
+  ioc: "#22F0FF",
   technique: "#A78BFA",
-  actor: "#F87171",
-  malware: "#FB923C",
-  sector: "#60A5FA",
+  actor: "#FF3B5C",
+  malware: "#FF8A1F",
+  sector: "#3B6BFF",
 };
+
+const GRAPH_CANVAS = "#0B0E14";
+const EDGE_COLOR = "#5A1620";
 
 function nodeColor(type: string): string {
   return NODE_TYPE_COLOR[type] ?? C.muted;
@@ -90,7 +93,7 @@ function GraphLoader({ data, filterTypes, minReports, atDate, onClickNode, onHov
       g.addEdge(e.source, e.target, {
         label: e.relation,
         size: 1,
-        color: `${C.border}`,
+        color: EDGE_COLOR,
         _meta: e,
       });
     }
@@ -432,10 +435,10 @@ export default function MemoryGraphPage() {
         }}
       >
         <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>
-          🧠 Memory Graph
+          Memory graph
         </div>
         <div style={{ fontSize: 12, color: C.muted }}>
-          {data.nodes.length} nodes · {data.edges.length} edges
+          {data.nodes.length} nodes, {data.edges.length} edges
         </div>
         {/* search */}
         <input
@@ -453,38 +456,7 @@ export default function MemoryGraphPage() {
             width: 200,
           }}
         />
-        {/* node type filters */}
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          {Object.keys(NODE_TYPE_COLOR).map((type) => (
-            <button
-              key={type}
-              onClick={() => toggleType(type)}
-              style={{
-                background: filterTypes.has(type) ? `${NODE_TYPE_COLOR[type]}22` : C.raised,
-                border: `1px solid ${filterTypes.has(type) ? NODE_TYPE_COLOR[type] : C.border}`,
-                borderRadius: 4,
-                color: filterTypes.has(type) ? NODE_TYPE_COLOR[type] : C.muted,
-                padding: "2px 8px",
-                fontSize: 10,
-                cursor: "pointer",
-                textTransform: "capitalize",
-              }}
-            >
-              {type}
-            </button>
-          ))}
         </div>
-        {/* min reports filter */}
-        <label style={{ fontSize: 11, color: C.muted, display: "flex", alignItems: "center", gap: 6 }}>
-          <input
-            type="checkbox"
-            checked={minReports > 1}
-            onChange={(e) => setMinReports(e.target.checked ? 2 : 1)}
-            style={{ accentColor: C.observed }}
-          />
-          Only entities seen in ≥2 reports
-        </label>
-      </div>
 
       {/* main content */}
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
@@ -514,11 +486,21 @@ export default function MemoryGraphPage() {
         {/* graph canvas */}
         <div style={{ flex: 1, position: "relative", minHeight: 500 }}>
           <SigmaContainer
-            style={{ width: "100%", height: "100%", background: C.bg }}
+            style={{ width: "100%", height: "100%", background: GRAPH_CANVAS }}
             options={{
               settings: {
                 renderLabels: true,
                 enableEdgeEvents: false,
+              },
+              styles: {
+                nodes: {
+                  color: { attribute: "color" },
+                  size: { attribute: "size" },
+                  label: { attribute: "label" },
+                  labelColor: "#F5F5F7",
+                  labelSize: 11,
+                },
+                edges: { color: { attribute: "color" }, size: { attribute: "size" } },
               },
             }}
           >
@@ -531,6 +513,55 @@ export default function MemoryGraphPage() {
               onHoverNode={() => {}}
             />
           </SigmaContainer>
+
+          {/* control panel, floating over the graph */}
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 12,
+              zIndex: 10,
+              width: 220,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              padding: 12,
+              background: "#0A0A0A",
+              border: `1px solid ${C.border}`,
+              borderRadius: 20,
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>Filters</div>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {Object.keys(NODE_TYPE_COLOR).map((type) => (
+            <button
+              key={type}
+              onClick={() => toggleType(type)}
+              style={{
+                background: filterTypes.has(type) ? `${NODE_TYPE_COLOR[type]}22` : C.raised,
+                border: `1px solid ${filterTypes.has(type) ? NODE_TYPE_COLOR[type] : C.border}`,
+                borderRadius: 4,
+                color: filterTypes.has(type) ? NODE_TYPE_COLOR[type] : C.muted,
+                padding: "2px 8px",
+                fontSize: 10,
+                cursor: "pointer",
+                textTransform: "capitalize",
+              }}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+                <label style={{ fontSize: 11, color: C.muted, display: "flex", alignItems: "center", gap: 6 }}>
+          <input
+            type="checkbox"
+            checked={minReports > 1}
+            onChange={(e) => setMinReports(e.target.checked ? 2 : 1)}
+            style={{ accentColor: C.observed }}
+          />
+          Only entities seen in ≥2 reports
+        </label>
+          </div>
 
           {/* right node drawer */}
           <AnimatePresence>

@@ -22,7 +22,7 @@ export function HealthDot() {
       <span
         className={cn(
           "size-1.5 rounded-full",
-          ok ? "bg-success glow-primary" : "bg-danger glow-danger",
+          ok ? "bg-success" : "bg-danger",
         )}
         aria-hidden="true"
       />

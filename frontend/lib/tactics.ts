@@ -5,8 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import { getTactics } from "@/lib/api";
 import type { Tactic } from "@/lib/types";
 
+// One neon colour per ATT&CK tactic, by matrix order. Names and order still come from the API.
+export const TACTIC_COLORS = [
+  "#FF3B5C", "#FF5F3B", "#FF8A1F", "#FFB81F", "#FFE14D",
+  "#C6F135", "#5CF268", "#22E8A0", "#1FE0D0", "#22C8FF",
+  "#3B8CFF", "#6B6BFF", "#9B5CFF", "#D14DFF", "#FF4DB8",
+] as const;
+
 export function tacticColor(ord: number): string {
-  return `hsl(${ord * 24}, 70%, 60%)`;
+  return TACTIC_COLORS[((ord % TACTIC_COLORS.length) + TACTIC_COLORS.length) % TACTIC_COLORS.length];
 }
 
 export function useTactics(): {
@@ -45,7 +52,7 @@ export function useTactics(): {
       return tacticColor(shortnameOrOrd);
     }
     const t = byShortname[shortnameOrOrd];
-    return t ? tacticColor(t.ord) : "hsl(215, 15%, 50%)"; // neutral grey fallback
+    return t ? tacticColor(t.ord) : "#5A5A63"; // neutral grey fallback
   };
 
   const getName = (shortname: string): string => {

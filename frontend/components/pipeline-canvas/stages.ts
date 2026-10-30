@@ -141,6 +141,9 @@ export const STAGES_CONFIG: Record<StageName, StageMeta> = {
   },
 };
 
+// Pipeline order, which also picks each stage's colour.
+export const STAGE_ORDER = Object.keys(STAGES_CONFIG) as StageName[];
+
 export const PIPELINE_EDGES = [
   { id: "e-ingest-guard", source: "ingest", target: "guard" },
   { id: "e-guard-ioc", source: "guard", target: "ioc" },

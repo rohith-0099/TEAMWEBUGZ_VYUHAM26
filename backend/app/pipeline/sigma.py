@@ -19,7 +19,7 @@ from app.models import IOC, Detection, ReportAnalysis, SigmaRule
 
 log = logging.getLogger(__name__)
 
-MAX_BEHAVIOUR_RULES = 8
+MAX_BEHAVIOUR_RULES = 4  # each is an LLM call; IOC rules are always generated
 BEHAVIOUR_RULE_CONFIDENCE = 0.75
 
 BEHAVIOUR_SYSTEM = f"""You write Sigma detection rules. Write ONE Sigma rule as YAML for the behaviour you are given.

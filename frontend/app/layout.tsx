@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
+import { Doto, Inter, VT323 } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
 import { Providers } from "@/components/layout/Providers";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
-const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
-const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin"] });
+const doto = Doto({ variable: "--font-doto", subsets: ["latin"], weight: ["700"] });
+const vt323 = VT323({ variable: "--font-vt323", subsets: ["latin"], weight: "400" });
 
 export const metadata: Metadata = {
   title: "TRINETRA",
@@ -17,7 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}
+        className={`${inter.variable} ${GeistMono.variable} ${doto.variable} ${vt323.variable} font-sans antialiased`}
       >
         <Providers>
           <AppShell>{children}</AppShell>

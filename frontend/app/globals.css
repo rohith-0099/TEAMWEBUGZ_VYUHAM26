@@ -8,8 +8,11 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-jetbrains-mono);
-  --font-heading: var(--font-space-grotesk);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-inter);
+  --font-console: var(--font-doto), var(--font-vt323), monospace;
+  --radius-card: var(--radius-card);
+  --color-graph-canvas: var(--graph-canvas);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
   --color-success: var(--success);
@@ -73,76 +76,92 @@
 }
 
 :root {
-  /* TRINETRA "Dark Cinematic Cybersecurity" theme — premium SOC console skin.
-     Meaning colours (observed/predicted/rejected/IOC roles) stay semantically
-     fixed per contracts §11; only the literal hex values are reskinned here. */
-  --background: #080a0a;
-  --foreground: #eef4f1;
-  --card: #171c1a;
-  --card-foreground: #eef4f1;
-  --popover: #171c1a;
-  --popover-foreground: #eef4f1;
-  --primary: #00ff85;
-  --primary-foreground: #061008;
-  --secondary: #8b5cf6;
-  --secondary-foreground: #f5f3ff;
-  --muted: #101413;
-  --muted-foreground: #8ea39b;
-  --accent: #202724;
-  --accent-foreground: #eef4f1;
-  --destructive: #ff3b4e;
-  --border: #303936;
-  --input: #303936;
-  --ring: #00ff85;
-  --chart-1: #00ff85;
-  --chart-2: #00e5c3;
-  --chart-3: #00b8ff;
-  --chart-4: #ffb547;
-  --chart-5: #ff3b4e;
+  /* Neon Ops. Page is true black; cards are one step up; colour is reserved for data. */
+  --background: #000000;
+  --foreground: #f5f5f7;
+  --card: #0a0a0a;
+  --card-foreground: #f5f5f7;
+  --popover: #0a0a0a;
+  --popover-foreground: #f5f5f7;
+  --primary: #3b6bff;
+  --primary-foreground: #ffffff;
+  --secondary: #141414;
+  --secondary-foreground: #f5f5f7;
+  --muted: #141414;
+  --muted-foreground: #8a8a93;
+  --accent: #141414;
+  --accent-foreground: #f5f5f7;
+  --destructive: #ff3b5c;
+  --border: #1f1f1f;
+  --input: #1f1f1f;
+  --ring: #3b6bff;
+  --chart-1: #3b6bff;
+  --chart-2: #22f0ff;
+  --chart-3: #39ff88;
+  --chart-4: #ffc53d;
+  --chart-5: #ff3b5c;
   --radius: 0.625rem;
-  --sidebar: #101413;
-  --sidebar-foreground: #eef4f1;
-  --sidebar-primary: #00ff85;
-  --sidebar-primary-foreground: #061008;
-  --sidebar-accent: #202724;
-  --sidebar-accent-foreground: #eef4f1;
-  --sidebar-border: #303936;
-  --sidebar-ring: #00ff85;
+  --radius-card: 20px;
+  --sidebar: #000000;
+  --sidebar-foreground: #f5f5f7;
+  --sidebar-primary: #3b6bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #141414;
+  --sidebar-accent-foreground: #f5f5f7;
+  --sidebar-border: #1f1f1f;
+  --sidebar-ring: #3b6bff;
   /* Surfaces */
-  --surface: #101413;
-  --raised: #202724;
+  --surface: #0a0a0a;
+  --raised: #141414;
+  --graph-canvas: #0b0e14;
   /* Status */
-  --success: #00ff85;
-  --warning: #ffb547;
-  --danger: #ff3b4e;
-  --info: #00b8ff;
-  /* Meaning colours (never reuse for anything else) */
-  --observed: #00e5c3;
-  --predicted: #8b5cf6;
-  --unknown-gap: #4b5a54;
-  --rejected: #ff3b4e;
-  /* IOC role colours */
-  --role-c2: #ff3b4e;
-  --role-payload: #ffb547;
-  --role-phishing: #ffd54a;
-  --role-exfil: #e879f9;
-  --role-victim: #00b8ff;
-  --role-scanner: #8ea39b;
-  --role-infrastructure: #00e5c3;
-  --role-unknown: #5b6c65;
-  /* Node "kind" badge colours for the pipeline canvas (contracts §9) */
-  --kind-deterministic: #8ea39b;
-  --kind-llm: #8b5cf6;
-  --kind-vector: #00e5c3;
-  --kind-hybrid: #ffb547;
-  --kind-graph: #00b8ff;
-  --kind-ml: #ff6bd6;
+  --success: #39ff88;
+  --warning: #ffc53d;
+  --danger: #ff3b5c;
+  --info: #3b6bff;
+  /* Meaning colours: never reused for anything else */
+  --observed: #22f0ff;
+  --predicted: #a78bfa;
+  --unknown-gap: #5a5a63;
+  --rejected: #ff3b5c;
+  /* IOC roles */
+  --role-c2: #ff3b5c;
+  --role-payload: #ff8a1f;
+  --role-phishing: #ffc53d;
+  --role-exfil: #d14dff;
+  --role-victim: #3b8cff;
+  --role-scanner: #8a8a93;
+  --role-infrastructure: #22e8a0;
+  --role-unknown: #5a5a63;
+  /* Pipeline stage kinds */
+  --kind-deterministic: #8a8a93;
+  --kind-llm: #a78bfa;
+  --kind-vector: #22f0ff;
+  --kind-hybrid: #ffc53d;
+  --kind-graph: #3b8cff;
+  --kind-ml: #ff4db8;
+  /* 15 ATT&CK tactics, by matrix order */
+  --tactic-0: #ff3b5c;
+  --tactic-1: #ff5f3b;
+  --tactic-2: #ff8a1f;
+  --tactic-3: #ffb81f;
+  --tactic-4: #ffe14d;
+  --tactic-5: #c6f135;
+  --tactic-6: #5cf268;
+  --tactic-7: #22e8a0;
+  --tactic-8: #1fe0d0;
+  --tactic-9: #22c8ff;
+  --tactic-10: #3b8cff;
+  --tactic-11: #6b6bff;
+  --tactic-12: #9b5cff;
+  --tactic-13: #d14dff;
+  --tactic-14: #ff4db8;
 }
 
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
@@ -154,7 +173,7 @@
     @apply font-heading;
   }
   ::selection {
-    background: color-mix(in oklch, var(--primary), transparent 70%);
+    background: #3b6bff66;
   }
   ::-webkit-scrollbar {
     width: 10px;
@@ -173,30 +192,62 @@
 }
 
 @layer utilities {
-  /* Controlled neon glow — used sparingly on active/primary elements only. */
-  .glow-primary {
-    box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary), transparent 55%),
-      0 0 18px -2px color-mix(in oklch, var(--primary), transparent 35%);
-  }
-  .glow-observed {
-    box-shadow: 0 0 0 1px color-mix(in oklch, var(--observed), transparent 55%),
-      0 0 16px -2px color-mix(in oklch, var(--observed), transparent 40%);
-  }
-  .glow-danger {
-    box-shadow: 0 0 0 1px color-mix(in oklch, var(--danger), transparent 50%),
-      0 0 16px -2px color-mix(in oklch, var(--danger), transparent 35%);
-  }
   .text-balance {
     text-wrap: balance;
   }
-  /* Subtle animated SOC-console grid, cheap CSS only — home page background. */
-  .bg-grid-glow {
-    background-image:
-      linear-gradient(to right, color-mix(in oklch, var(--border), transparent 55%) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklch, var(--border), transparent 55%) 1px, transparent 1px),
-      radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in oklch, var(--primary), transparent 88%), transparent);
-    background-size: 44px 44px, 44px 44px, 100% 100%;
-    background-position: center, center, center;
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Console panel titles only. */
+  .console-title {
+    font-family: var(--font-doto), var(--font-vt323), monospace;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  /* Colour is never the only signal: gaps and empty tactics are also hatched. */
+  .hatched {
+    background-image: repeating-linear-gradient(135deg, transparent 0 5px, #1f1f1f 5px 6px);
+  }
+  /* The only glow on the page, and only while a stage is actually running. */
+  .stage-running {
+    border-style: solid;
+    border-color: var(--stage-color, var(--primary));
+    box-shadow: 0 0 0 1px var(--stage-color, var(--primary)), 0 0 18px var(--stage-color, var(--primary));
+    animation: stage-breathe 1.4s ease-in-out infinite;
+  }
+  .reveal-grow {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: reveal-grow 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes stage-breathe {
+  50% {
+    box-shadow: 0 0 0 1px var(--stage-color, var(--primary)), 0 0 6px var(--stage-color, var(--primary));
+  }
+}
+
+@keyframes reveal-grow {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid #3b6bff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
   }
 }
 

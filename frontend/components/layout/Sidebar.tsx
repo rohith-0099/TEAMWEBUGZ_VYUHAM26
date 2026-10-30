@@ -29,7 +29,7 @@ export function Sidebar() {
       )}
     >
       <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-        <Logo className="size-6 shrink-0 drop-shadow-[0_0_6px_var(--primary)]" />
+        <Logo className="size-6 shrink-0" />
         {!collapsed && (
           <span className="font-heading text-sm font-semibold tracking-[0.2em] text-sidebar-foreground">
             TRINETRA
@@ -55,7 +55,7 @@ export function Sidebar() {
               <item.icon
                 className={cn(
                   "size-4 shrink-0",
-                  active && "text-primary drop-shadow-[0_0_6px_var(--primary)]",
+                  active && "text-primary",
                 )}
                 aria-hidden="true"
               />

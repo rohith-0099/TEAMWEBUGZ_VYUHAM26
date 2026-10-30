@@ -33,14 +33,14 @@ import { useAnalysisStore } from "@/lib/store";
 import type { IOC, IOCRole, IOCType } from "@/lib/types";
 
 const ROLE_COLORS: Record<IOCRole, { bg: string; text: string; border: string }> = {
-  c2: { bg: "bg-red-950/40", text: "text-red-400", border: "border-red-800/60" },
-  payload: { bg: "bg-orange-950/40", text: "text-orange-400", border: "border-orange-800/60" },
-  phishing: { bg: "bg-amber-950/40", text: "text-amber-400", border: "border-amber-800/60" },
+  c2: { bg: "bg-danger/10", text: "text-danger", border: "border-danger/40" },
+  payload: { bg: "bg-warning/10", text: "text-warning", border: "border-warning/40" },
+  phishing: { bg: "bg-warning/10", text: "text-warning", border: "border-warning/40" },
   exfil: { bg: "bg-fuchsia-950/40", text: "text-fuchsia-400", border: "border-fuchsia-800/60" },
-  victim: { bg: "bg-blue-950/40", text: "text-blue-400", border: "border-blue-800/60" },
-  scanner: { bg: "bg-slate-800/50", text: "text-slate-300", border: "border-slate-700" },
-  infrastructure: { bg: "bg-teal-950/40", text: "text-teal-400", border: "border-teal-800/60" },
-  unknown: { bg: "bg-slate-900/60", text: "text-slate-400", border: "border-slate-800" },
+  victim: { bg: "bg-primary/10", text: "text-primary", border: "border-primary/40" },
+  scanner: { bg: "bg-raised", text: "text-muted-foreground", border: "border-border" },
+  infrastructure: { bg: "bg-observed/10", text: "text-observed", border: "border-observed/40" },
+  unknown: { bg: "bg-raised", text: "text-muted-foreground", border: "border-border" },
 };
 
 const TYPE_ICONS: Record<IOCType, React.ElementType> = {
@@ -109,7 +109,7 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
 
   return (
     <TooltipProvider delay={200}>
-      <div className="flex flex-col gap-3 rounded-xl border bg-card/60 p-4 shadow-sm backdrop-blur">
+      <div className="flex flex-col gap-3 rounded-[20px] border bg-card p-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Shield className="size-4 text-primary" />
@@ -163,7 +163,7 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
         {/* IOC Table */}
         <div className="overflow-x-auto rounded-lg border bg-background/60">
           <table className="w-full text-left text-xs">
-            <thead className="border-b bg-muted/40 font-mono text-[11px] text-muted-foreground uppercase">
+            <thead className="border-b bg-muted/40 font-mono text-[11px] text-muted-foreground">
               <tr>
                 <th className="py-2.5 pl-3 pr-2">Type</th>
                 <th className="px-3 py-2.5">Indicator (Defanged)</th>
@@ -210,7 +210,7 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
 
                       <td className="px-3 py-2.5">
                         <span
-                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase ${roleStyle.bg} ${roleStyle.text} ${roleStyle.border}`}
+                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide ${roleStyle.bg} ${roleStyle.text} ${roleStyle.border}`}
                         >
                           {ioc.role}
                         </span>
@@ -258,7 +258,7 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
                           title="Copy defanged indicator"
                         >
                           {copiedId === ioc.id ? (
-                            <Check className="size-3.5 text-emerald-400" />
+                            <Check className="size-3.5 text-success" />
                           ) : (
                             <Copy className="size-3.5" />
                           )}

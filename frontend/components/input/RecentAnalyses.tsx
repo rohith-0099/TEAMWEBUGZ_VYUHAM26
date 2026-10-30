@@ -14,6 +14,8 @@ const STATUS_STYLE = {
   error: { icon: AlertTriangle, className: "text-danger", label: "error" },
 } as const;
 
+const MAX_SHOWN = 6;
+
 function sourceDomain(url: string | null): string {
   if (!url) return "pasted text";
   try {
@@ -42,20 +44,20 @@ export function RecentAnalyses() {
 
   return (
     <ul className="flex flex-col gap-2">
-      {data.map((a) => {
+      {data.slice(0, MAX_SHOWN).map((a) => {
         const status = STATUS_STYLE[a.status];
         const StatusIcon = status.icon;
         return (
           <li key={a.report_id}>
             <Link
               href={`/report/${a.report_id}`}
-              className="group flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40 hover:bg-raised"
+              className="group flex items-center gap-4 rounded-[20px] border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40 hover:bg-raised"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-foreground group-hover:text-primary">{a.title}</p>
+                <p className="truncate font-medium text-foreground group-hover:text-observed">{a.title}</p>
                 <p className="truncate font-mono text-xs text-muted-foreground">
-                  {sourceDomain(a.source_url)} ·{" "}
-                  {a.published_at ? new Date(a.published_at).toLocaleDateString() : "undated"}
+                  {sourceDomain(a.source_url)}
+                  {a.published_at ? `, ${new Date(a.published_at).toLocaleDateString()}` : ""}
                 </p>
               </div>
               <div className="hidden shrink-0 items-center gap-3 text-xs text-muted-foreground sm:flex">
@@ -71,7 +73,7 @@ export function RecentAnalyses() {
               </div>
               <span
                 className={cn(
-                  "flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide",
+                  "flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] tracking-wide",
                   status.className,
                 )}
               >

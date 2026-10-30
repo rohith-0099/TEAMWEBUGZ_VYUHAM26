@@ -16,7 +16,7 @@ import {
 
 export function TopBar() {
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur supports-backdrop-filter:bg-background/70 sm:px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 supports-backdrop-filter:bg-background/70 sm:px-6">
       <SearchCommandBar />
 
       <div className="ml-auto flex items-center gap-2">

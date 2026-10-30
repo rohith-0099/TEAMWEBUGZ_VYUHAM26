@@ -99,7 +99,7 @@ export function StixPreviewDialog({ open, onOpenChange, reportId }: StixPreviewD
                 disabled={loading || !content}
                 className="h-8 gap-1.5 text-xs"
               >
-                {copied ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
                 <span>{copied ? "Copied" : "Copy"}</span>
               </Button>
               <a

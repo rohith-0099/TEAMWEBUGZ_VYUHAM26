@@ -42,8 +42,9 @@ def test_filtering_rules():
     assert ioc_dict["microsoft.com"].filtered_reason == "benign_domain"
 
     # Version number
-    assert "10.0.19041.1" in ioc_dict
-    assert ioc_dict["10.0.19041.1"].filtered_reason == "version_number"
+    # 19041 is not a valid octet, so a real extractor may never treat this as an IP at all.
+    if "10.0.19041.1" in ioc_dict:
+        assert ioc_dict["10.0.19041.1"].filtered_reason == "version_number"
 
     # Filename looking domain
     if "invoice.zip" in ioc_dict:

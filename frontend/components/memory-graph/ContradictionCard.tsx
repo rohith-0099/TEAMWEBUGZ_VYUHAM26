@@ -6,14 +6,14 @@ import { motion } from "framer-motion";
 import type { MemoryAlert } from "@/lib/types";
 
 const C = {
-  surface: "#0E1117",
-  raised: "#151A22",
-  border: "#232A35",
-  text: "#E6EDF3",
-  muted: "#8B95A5",
-  warning: "#FBBF24",
-  danger: "#F87171",
-  success: "#34D399",
+  surface: "#0A0A0A",
+  raised: "#141414",
+  border: "#1F1F1F",
+  text: "#F5F5F7",
+  muted: "#8A8A93",
+  warning: "#FFC53D",
+  danger: "#FF3B5C",
+  success: "#39FF88",
 };
 
 export function ContradictionCard({ alert }: { alert: MemoryAlert }) {
@@ -35,8 +35,8 @@ export function ContradictionCard({ alert }: { alert: MemoryAlert }) {
         }}
       >
         <div style={{ fontSize: 12, color: C.text, fontWeight: 600, marginBottom: 6 }}>
-          🔁{" "}
-          <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#22D3EE" }}>
+          
+          <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#22F0FF" }}>
             {alert.entity_display}
           </span>{" "}
           appeared in {alert.reports.length} report{alert.reports.length !== 1 ? "s" : ""}
@@ -92,8 +92,8 @@ export function ContradictionCard({ alert }: { alert: MemoryAlert }) {
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 8 }}>
-        ⚡ Conflicting claims about{" "}
-        <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#22D3EE" }}>
+        Conflicting claims about{" "}
+        <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#22F0FF" }}>
           {alert.entity_display}
         </span>
       </div>

@@ -7,9 +7,12 @@ import {
   Clock,
   Copy,
   ExternalLink,
+  Fingerprint,
+  Grid3x3,
   Repeat,
-  Shield,
   ShieldAlert,
+  ShieldX,
+  Swords,
   ShieldCheck,
   Zap,
 } from "lucide-react";
@@ -25,6 +28,10 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AttackFlowView } from "@/components/attack-flow";
+import { StatCard } from "@/components/charts";
+import { FilterStream } from "@/components/report-overview/FilterStream";
+import { TacticRadarCard } from "@/components/report-overview/TacticRadarCard";
+import { TacticTiles } from "@/components/report-overview/TacticTiles";
 import { AttackHeatmap } from "@/components/attack-heatmap";
 import { DetectionPanel } from "@/components/detection-panel";
 import { ExportDropdown } from "@/components/exports";
@@ -79,9 +86,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       (analysis.techniques || []).filter(
         (t) =>
           t.status === "rejected" &&
-          (t.reject_reason === "id_not_in_v20" ||
-            t.reject_reason === "quote_not_in_source" ||
-            t.reject_reason === "verifier_mismatch")
+          (t.reject_reason === "id_not_in_v20" || t.reject_reason === "quote_not_in_source")
       ).length,
     [analysis.techniques]
   );
@@ -115,9 +120,9 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const memoryAlerts = analysis.memory_alerts || [];
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
+    <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
       {/* Report Header */}
-      <div className="flex flex-col gap-4 rounded-xl border bg-card/70 p-5 shadow-sm backdrop-blur">
+      <div className="flex flex-col gap-4 rounded-[20px] border bg-card p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-2">
@@ -129,13 +134,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                 variant="outline"
                 className={
                   analysis.status === "done"
-                    ? "border-emerald-500/60 bg-emerald-950/30 text-emerald-400 font-mono"
+                    ? "border-success/40 bg-success/10 text-success font-mono"
                     : analysis.status === "error"
                     ? "border-destructive/60 bg-destructive/10 text-destructive font-mono"
                     : "border-primary/60 bg-primary/10 text-primary font-mono animate-pulse"
                 }
               >
-                ● {analysis.status ?? "running"}
+                {analysis.status ?? "running"}
               </Badge>
               {analysis.source_url && (
                 <a
@@ -169,7 +174,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             <div className="flex items-center gap-2 font-medium">
               <ShieldAlert className="size-4 shrink-0" />
               <span>
-                <strong>⚠ Prompt-injection attempt detected in this report</strong> (mapped to
+                <strong>Prompt-injection attempt detected in this report</strong> (mapped to
                 ATT&CK {injectionFlags[0]?.technique_id || "T1699"}). Untrusted content was treated
                 strictly as data.
               </span>
@@ -195,7 +200,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                   <Link
                     key={idx}
                     href="/graph"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-950/30 px-3 py-1 font-mono text-xs text-teal-300 hover:bg-teal-900/40"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-observed/40 bg-observed/10 px-3 py-1 font-mono text-xs text-observed hover:bg-observed/10"
                   >
                     <Repeat className="size-3" />
                     <span>{alert.message}</span>
@@ -206,106 +211,73 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                 <button
                   key={idx}
                   onClick={() => setSelectedContradiction(alert)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/50 bg-amber-950/30 px-3 py-1 font-mono text-xs text-amber-300 hover:bg-amber-900/40"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1 font-mono text-xs text-warning hover:bg-warning/10"
                 >
                   <Zap className="size-3" />
-                  <span>⚡ Contradiction: {alert.entity_display}</span>
+                  <span>Contradiction: {alert.entity_display}</span>
                 </button>
               );
             })}
           </div>
         )}
-
-        {/* Stat Strip */}
-        <div className="grid grid-cols-2 gap-3 border-t pt-4 sm:grid-cols-5">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              Indicators
-            </span>
-            <span className="font-heading text-xl font-bold text-foreground">
-              {nonFilteredIocs.length}
-            </span>
-            <span className="text-[10px] text-muted-foreground">Cleaned &amp; Defanged</span>
-          </div>
-
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              Techniques
-            </span>
-            <span className="font-heading text-xl font-bold text-primary">
-              {acceptedTechniques.length}
-            </span>
-            <span className="text-[10px] text-muted-foreground">ATT&amp;CK v20 Verified</span>
-          </div>
-
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              Tactics
-            </span>
-            <span className="font-heading text-xl font-bold text-foreground">
-              {coveredTacticsCount}
-              <span className="text-sm font-normal text-muted-foreground">/15</span>
-            </span>
-            <span className="text-[10px] text-muted-foreground">Matrix Coverage</span>
-          </div>
-
-          <div className="flex flex-col gap-0.5">
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-              <Shield className="size-3" /> Blocked 🛡️
-            </span>
-            <span className="font-heading text-xl font-bold text-emerald-400">
-              {hallucinationsBlocked}
-            </span>
-            <span className="text-[10px] text-muted-foreground">Hallucinations Filtered</span>
-          </div>
-
-          <div className="flex flex-col gap-0.5 col-span-2 sm:col-span-1">
-            <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              <Clock className="size-3" /> Latency
-            </span>
-            <span className="font-heading text-xl font-bold font-mono text-foreground">
-              {totalTimeMs > 0 ? `${(totalTimeMs / 1000).toFixed(1)}s` : "streaming"}
-            </span>
-            <span className="text-[10px] text-muted-foreground">Parallel Stream</span>
-          </div>
-        </div>
       </div>
 
-      {/* Pipeline Canvas (Full Width) */}
-      <PipelineCanvas />
+      {/* Five numbers */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <StatCard label="Indicators" value={nonFilteredIocs.length} hint="Cleaned and defanged" icon={Fingerprint} />
+        <StatCard label="Techniques" value={acceptedTechniques.length} hint="Verified against ATT&CK v20" tone="primary" icon={Swords} />
+        <StatCard label="Tactics" value={coveredTacticsCount} unit="/15" hint="Matrix coverage" icon={Grid3x3} />
+        <StatCard label="Hallucinations blocked" value={hallucinationsBlocked} hint="Fake IDs and fake quotes" tone="danger" icon={ShieldX} />
+        <StatCard
+          label="Latency"
+          value={totalTimeMs > 0 ? (totalTimeMs / 1000).toFixed(1) : "–"}
+          unit={totalTimeMs > 0 ? "s" : undefined}
+          hint="Report to result"
+          icon={Clock}
+          className="col-span-2 lg:col-span-1"
+        />
+      </div>
+
+      {/* Pipeline + radar */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]">
+        <PipelineCanvas />
+        <TacticRadarCard />
+      </div>
 
       {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col gap-4">
-        <TabsList className="h-10 justify-start rounded-xl border bg-card/60 p-1">
-          <TabsTrigger value="overview" className="text-xs font-semibold">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-w-0 flex-col gap-4">
+        <TabsList className="h-10 w-full justify-start overflow-x-auto sm:w-fit rounded-[20px] border bg-card p-1">
+          <TabsTrigger value="overview" className="flex-none text-xs font-semibold">
             Overview
           </TabsTrigger>
-          <TabsTrigger value="evidence" className="text-xs font-semibold">
-            Evidence Ground-Truth
+          <TabsTrigger value="evidence" className="flex-none text-xs font-semibold">
+            Evidence
           </TabsTrigger>
-          <TabsTrigger value="flow" className="text-xs font-semibold">
-            Attack Flow (S1/S2/S3)
+          <TabsTrigger value="flow" className="flex-none text-xs font-semibold">
+            Attack flow
           </TabsTrigger>
-          <TabsTrigger value="detections" className="text-xs font-semibold">
-            Detections &amp; Sigma (S4)
+          <TabsTrigger value="detections" className="flex-none text-xs font-semibold">
+            Detections
           </TabsTrigger>
-          <TabsTrigger value="map" className="text-xs font-semibold">
-            Infrastructure Map
+          <TabsTrigger value="map" className="flex-none text-xs font-semibold">
+            Map
           </TabsTrigger>
-          <TabsTrigger value="raw" className="text-xs font-semibold">
-            Raw JSON
+          <TabsTrigger value="raw" className="flex-none text-xs font-semibold">
+            Raw
           </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TabsContent value="overview" className="flex min-w-0 flex-col gap-6">
+          <FilterStream />
+          <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <IocTable iocs={analysis.iocs} />
-            <TechniqueCards
-              techniques={analysis.techniques}
-              onSelectTab={(tab) => setActiveTab(tab)}
-            />
+            <TacticTiles />
           </div>
+          <TechniqueCards
+            techniques={analysis.techniques}
+            onSelectTab={(tab) => setActiveTab(tab)}
+          />
           <AttackHeatmap />
         </TabsContent>
 
@@ -316,30 +288,30 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
         {/* Attack Flow Tab (Frontend B Slot) */}
         <TabsContent value="flow">
-          <div className="rounded-xl border bg-card/60 p-4 shadow-sm backdrop-blur">
+          <div className="rounded-[20px] border bg-card p-4">
             <AttackFlowView analysis={analysis} />
           </div>
         </TabsContent>
 
         {/* Detections Tab (Frontend B Slot) */}
         <TabsContent value="detections">
-          <div className="rounded-xl border bg-card/60 p-4 shadow-sm backdrop-blur">
+          <div className="rounded-[20px] border bg-card p-4">
             <DetectionPanel analysis={analysis} />
           </div>
         </TabsContent>
 
         {/* Map Tab (Frontend B Slot) */}
         <TabsContent value="map">
-          <div className="rounded-xl border bg-card/60 p-4 shadow-sm backdrop-blur">
+          <div className="rounded-[20px] border bg-card p-4">
             <GlobeView analysisId={id} />
           </div>
         </TabsContent>
 
         {/* Raw Tab */}
         <TabsContent value="raw">
-          <div className="flex flex-col gap-2 rounded-xl border bg-card/70 p-4 shadow-sm backdrop-blur">
+          <div className="flex flex-col gap-2 rounded-[20px] border bg-card p-4">
             <div className="flex items-center justify-between border-b pb-2">
-              <span className="font-heading text-xs font-semibold uppercase text-muted-foreground">
+              <span className="font-heading text-xs font-semibold text-muted-foreground">
                 Sanitized ReportAnalysis JSON (Value Field Omitted for Safety)
               </span>
               <Button
@@ -370,8 +342,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading text-lg font-semibold text-amber-400">
-              ⚡ Cross-Report Attribution Contradiction
+            <DialogTitle className="font-heading text-lg font-semibold text-warning">
+              Conflicting claims across reports
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               Identified by Temporal Memory Graph

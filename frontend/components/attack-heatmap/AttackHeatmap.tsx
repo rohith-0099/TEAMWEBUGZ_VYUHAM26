@@ -60,7 +60,7 @@ export function AttackHeatmap({ compact = false }: AttackHeatmapProps) {
 
   return (
     <TooltipProvider delay={150}>
-      <div className={`flex flex-col gap-3 rounded-xl border bg-card/60 shadow-sm backdrop-blur ${compact ? "p-3" : "p-4"}`}>
+      <div className={`flex flex-col gap-3 rounded-[20px] border bg-card ${compact ? "p-3" : "p-4"}`}>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
           <div className="flex items-center gap-2">
             <LayoutGrid className="size-4 text-primary" />
@@ -81,7 +81,7 @@ export function AttackHeatmap({ compact = false }: AttackHeatmapProps) {
                 className="size-3.5 rounded border-border text-primary focus:ring-primary"
               />
               <span className="flex items-center gap-1 font-mono text-[11px]">
-                <Sparkles className="size-3 text-purple-400" />
+                <Sparkles className="size-3 text-predicted" />
                 Show Predicted Ghost Techniques ({predictions.length})
               </span>
             </label>
@@ -139,14 +139,14 @@ export function AttackHeatmap({ compact = false }: AttackHeatmapProps) {
                                     onClick={() => selectTechnique(tech.technique_id)}
                                     className={`rounded border p-1 font-mono text-[9px] font-semibold transition-all hover:scale-105 ${
                                       isSelected
-                                        ? "ring-2 ring-primary border-primary shadow-sm"
+                                        ? "ring-2 ring-primary border-primary"
                                         : "border-border/60"
                                     }`}
                                     style={{
                                       backgroundColor: `color-mix(in oklch, var(--primary) ${Math.round(
                                         alpha * 100
                                       )}%, transparent)`,
-                                      color: alpha > 0.6 ? "#080A0A" : "#E6EDF3",
+                                      color: alpha > 0.6 ? "#080A0A" : "#F5F5F7",
                                     }}
                                   />
                                 }
@@ -175,14 +175,14 @@ export function AttackHeatmap({ compact = false }: AttackHeatmapProps) {
                             <TooltipTrigger
                               render={
                                 <div
-                                  className="rounded border border-dashed border-purple-500/70 bg-purple-950/40 p-1 font-mono text-[9px] font-medium text-purple-300 opacity-80"
+                                  className="rounded border border-dashed border-predicted/40 bg-predicted/10 p-1 font-mono text-[9px] font-medium text-predicted opacity-80"
                                 />
                               }
                             >
                               {tech.technique_id}
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-xs text-xs">
-                              <p className="font-bold font-mono text-purple-400">
+                              <p className="font-bold font-mono text-predicted">
                                 [PREDICTED] {tech.technique_id}: {tech.name}
                               </p>
                               <p className="text-[11px] text-muted-foreground">
