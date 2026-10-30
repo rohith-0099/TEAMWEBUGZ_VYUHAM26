@@ -9,7 +9,31 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-space-grotesk);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-observed: var(--observed);
+  --color-predicted: var(--predicted);
+  --color-unknown-gap: var(--unknown-gap);
+  --color-rejected: var(--rejected);
+  --color-role-c2: var(--role-c2);
+  --color-role-payload: var(--role-payload);
+  --color-role-phishing: var(--role-phishing);
+  --color-role-exfil: var(--role-exfil);
+  --color-role-victim: var(--role-victim);
+  --color-role-scanner: var(--role-scanner);
+  --color-role-infrastructure: var(--role-infrastructure);
+  --color-role-unknown: var(--role-unknown);
+  --color-kind-deterministic: var(--kind-deterministic);
+  --color-kind-llm: var(--kind-llm);
+  --color-kind-vector: var(--kind-vector);
+  --color-kind-hybrid: var(--kind-hybrid);
+  --color-kind-graph: var(--kind-graph);
+  --color-kind-ml: var(--kind-ml);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,56 +73,70 @@
 }
 
 :root {
-  /* Dark "SOC console" theme, contracts §11 */
-  --background: #07090d;
-  --foreground: #e6edf3;
-  --card: #0e1117;
-  --card-foreground: #e6edf3;
-  --popover: #151a22;
-  --popover-foreground: #e6edf3;
-  --primary: #22d3ee;
-  --primary-foreground: #07090d;
-  --secondary: #a78bfa;
-  --secondary-foreground: #07090d;
-  --muted: #151a22;
-  --muted-foreground: #8b95a5;
-  --accent: #151a22;
-  --accent-foreground: #e6edf3;
-  --destructive: #f87171;
-  --border: #232a35;
-  --input: #232a35;
-  --ring: #22d3ee;
-  --chart-1: #22d3ee;
-  --chart-2: #a78bfa;
-  --chart-3: #34d399;
-  --chart-4: #fbbf24;
-  --chart-5: #f87171;
+  /* TRINETRA "Dark Cinematic Cybersecurity" theme — premium SOC console skin.
+     Meaning colours (observed/predicted/rejected/IOC roles) stay semantically
+     fixed per contracts §11; only the literal hex values are reskinned here. */
+  --background: #080a0a;
+  --foreground: #eef4f1;
+  --card: #171c1a;
+  --card-foreground: #eef4f1;
+  --popover: #171c1a;
+  --popover-foreground: #eef4f1;
+  --primary: #00ff85;
+  --primary-foreground: #061008;
+  --secondary: #8b5cf6;
+  --secondary-foreground: #f5f3ff;
+  --muted: #101413;
+  --muted-foreground: #8ea39b;
+  --accent: #202724;
+  --accent-foreground: #eef4f1;
+  --destructive: #ff3b4e;
+  --border: #303936;
+  --input: #303936;
+  --ring: #00ff85;
+  --chart-1: #00ff85;
+  --chart-2: #00e5c3;
+  --chart-3: #00b8ff;
+  --chart-4: #ffb547;
+  --chart-5: #ff3b4e;
   --radius: 0.625rem;
-  --sidebar: #0e1117;
-  --sidebar-foreground: #e6edf3;
-  --sidebar-primary: #22d3ee;
-  --sidebar-primary-foreground: #07090d;
-  --sidebar-accent: #151a22;
-  --sidebar-accent-foreground: #e6edf3;
-  --sidebar-border: #232a35;
-  --sidebar-ring: #22d3ee;
-  /* Status and meaning colours */
-  --surface: #0e1117;
-  --raised: #151a22;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #f87171;
-  --info: #60a5fa;
-  --observed: #22d3ee;
-  --predicted: #a78bfa;
-  --role-c2: #f87171;
-  --role-payload: #fb923c;
-  --role-phishing: #fbbf24;
+  --sidebar: #101413;
+  --sidebar-foreground: #eef4f1;
+  --sidebar-primary: #00ff85;
+  --sidebar-primary-foreground: #061008;
+  --sidebar-accent: #202724;
+  --sidebar-accent-foreground: #eef4f1;
+  --sidebar-border: #303936;
+  --sidebar-ring: #00ff85;
+  /* Surfaces */
+  --surface: #101413;
+  --raised: #202724;
+  /* Status */
+  --success: #00ff85;
+  --warning: #ffb547;
+  --danger: #ff3b4e;
+  --info: #00b8ff;
+  /* Meaning colours (never reuse for anything else) */
+  --observed: #00e5c3;
+  --predicted: #8b5cf6;
+  --unknown-gap: #4b5a54;
+  --rejected: #ff3b4e;
+  /* IOC role colours */
+  --role-c2: #ff3b4e;
+  --role-payload: #ffb547;
+  --role-phishing: #ffd54a;
   --role-exfil: #e879f9;
-  --role-victim: #60a5fa;
-  --role-scanner: #94a3b8;
-  --role-infrastructure: #2dd4bf;
-  --role-unknown: #64748b;
+  --role-victim: #00b8ff;
+  --role-scanner: #8ea39b;
+  --role-infrastructure: #00e5c3;
+  --role-unknown: #5b6c65;
+  /* Node "kind" badge colours for the pipeline canvas (contracts §9) */
+  --kind-deterministic: #8ea39b;
+  --kind-llm: #8b5cf6;
+  --kind-vector: #00e5c3;
+  --kind-hybrid: #ffb547;
+  --kind-graph: #00b8ff;
+  --kind-ml: #ff6bd6;
 }
 
 
@@ -111,5 +149,60 @@
   }
   html {
     @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary), transparent 70%);
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--surface);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+}
+
+@layer utilities {
+  /* Controlled neon glow — used sparingly on active/primary elements only. */
+  .glow-primary {
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary), transparent 55%),
+      0 0 18px -2px color-mix(in oklch, var(--primary), transparent 35%);
+  }
+  .glow-observed {
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--observed), transparent 55%),
+      0 0 16px -2px color-mix(in oklch, var(--observed), transparent 40%);
+  }
+  .glow-danger {
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--danger), transparent 50%),
+      0 0 16px -2px color-mix(in oklch, var(--danger), transparent 35%);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Subtle animated SOC-console grid, cheap CSS only — home page background. */
+  .bg-grid-glow {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--border), transparent 55%) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--border), transparent 55%) 1px, transparent 1px),
+      radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in oklch, var(--primary), transparent 88%), transparent);
+    background-size: 44px 44px, 44px 44px, 100% 100%;
+    background-position: center, center, center;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0a0a0a !important;
   }
 }

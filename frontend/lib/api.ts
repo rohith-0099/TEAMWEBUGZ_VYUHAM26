@@ -4,6 +4,7 @@ import analysisMock from "@/lib/mock/analysis.json";
 import evalMock from "@/lib/mock/eval.json";
 import geoMock from "@/lib/mock/geo.json";
 import graphMock from "@/lib/mock/graph.json";
+import listMock from "@/lib/mock/list.json";
 import readinessMock from "@/lib/mock/readiness.json";
 import simulateMock from "@/lib/mock/simulate.json";
 import tacticsMock from "@/lib/mock/tactics.json";
@@ -59,15 +60,7 @@ export async function createAnalysis(
 
 export async function listAnalyses(): Promise<AnalysisListItem[]> {
   if (USE_MOCKS) {
-    const { report_id, title, source_url, published_at, created_at, status } = mockAnalysis;
-    return mock([{
-      report_id, title, source_url, published_at, created_at, status,
-      counts: {
-        iocs: mockAnalysis.iocs.filter((i) => !i.filtered_reason).length,
-        techniques: mockAnalysis.techniques.filter((t) => t.status === "accepted").length,
-        alerts: mockAnalysis.memory_alerts.length,
-      },
-    }]);
+    return mock(listMock as unknown as AnalysisListItem[]);
   }
   return request("/analyses");
 }
@@ -133,4 +126,11 @@ export async function getEval(): Promise<EvalResponse> {
 export async function getGeo(id: string): Promise<GeoPoint[]> {
   if (USE_MOCKS) return mock(geoMock);
   return request(`/analyses/${id}/geo`);
+}
+
+export type HealthResponse = { ok: boolean; attack_loaded: boolean; techniques: number };
+
+export async function getHealth(): Promise<HealthResponse> {
+  if (USE_MOCKS) return mock({ ok: true, attack_loaded: true, techniques: 227 });
+  return request("/health");
 }
