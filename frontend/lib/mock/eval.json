@@ -1,1 +1,85 @@
-{"ran_at":"2026-10-30T10:00:00Z","reports":1,"systems":[{"system":"baseline","precision":0.5,"recall":0.5,"f1":0.5,"parent_f1":0.5,"avg_latency_ms":1000},{"system":"trinetra","precision":0.5,"recall":0.5,"f1":0.5,"parent_f1":0.5,"avg_latency_ms":1000}],"per_report":[{"report_id":"mock-report","title":"[MOCK] Placeholder evaluation","url":"https://intel.example/reports/obsidianlock-2026","baseline":{"tp":["T1486"],"fp":["T1190"],"fn":["T1041"]},"trinetra":{"tp":["T1486","T1041"],"fp":[],"fn":[]}}]}
+{
+  "_mock": true,
+  "ran_at": "2026-10-30T10:00:00Z",
+  "reports": 4,
+  "systems": [
+    {
+      "system": "baseline",
+      "precision": 0.52,
+      "recall": 0.44,
+      "f1": 0.477,
+      "parent_f1": 0.512,
+      "avg_latency_ms": 4200
+    },
+    {
+      "system": "trinetra",
+      "precision": 0.91,
+      "recall": 0.88,
+      "f1": 0.895,
+      "parent_f1": 0.921,
+      "avg_latency_ms": 12400
+    }
+  ],
+  "per_report": [
+    {
+      "report_id": "mock-report",
+      "title": "ObsidianLock Ransomware Intrusion Targeting Regional Hospitals",
+      "url": "https://intel.example/reports/obsidianlock-2026",
+      "baseline": {
+        "tp": ["T1566.001", "T1059.001", "T1486"],
+        "fp": ["T1190", "T1210"],
+        "fn": ["T1547.001", "T1003.001", "T1021.001", "T1071.001", "T1041"]
+      },
+      "trinetra": {
+        "tp": ["T1566.001", "T1059.001", "T1547.001", "T1003.001", "T1021.001", "T1071.001", "T1041", "T1486"],
+        "fp": [],
+        "fn": []
+      }
+    },
+    {
+      "report_id": "mock-report-2",
+      "title": "APT29 Spearphishing Campaign Against EU Energy Sector",
+      "url": "https://intel.example/reports/apt29-energy-2026",
+      "baseline": {
+        "tp": ["T1566.001", "T1204.002"],
+        "fp": ["T1059.003", "T1082"],
+        "fn": ["T1078", "T1027", "T1071.001", "T1105"]
+      },
+      "trinetra": {
+        "tp": ["T1566.001", "T1204.002", "T1078", "T1027", "T1071.001", "T1105"],
+        "fp": ["T1059.003"],
+        "fn": []
+      }
+    },
+    {
+      "report_id": "mock-report-3",
+      "title": "Cl0p MOVEit Mass Exploitation Follow-Up",
+      "url": "https://intel.example/reports/clop-moveit-2026",
+      "baseline": {
+        "tp": ["T1190", "T1059.001"],
+        "fp": ["T1133", "T1048"],
+        "fn": ["T1505.003", "T1486", "T1041"]
+      },
+      "trinetra": {
+        "tp": ["T1190", "T1059.001", "T1505.003", "T1486", "T1041"],
+        "fp": [],
+        "fn": ["T1133"]
+      }
+    },
+    {
+      "report_id": "mock-report-4",
+      "title": "RedCurl Corporate Espionage via Phishing",
+      "url": "https://intel.example/reports/redcurl-2026",
+      "baseline": {
+        "tp": ["T1566.002", "T1059.001"],
+        "fp": ["T1021.001"],
+        "fn": ["T1074", "T1567", "T1560.001"]
+      },
+      "trinetra": {
+        "tp": ["T1566.002", "T1059.001", "T1074", "T1567", "T1560.001"],
+        "fp": [],
+        "fn": []
+      }
+    }
+  ]
+}
