@@ -1,0 +1,154 @@
+{
+  "name": "TRINETRA Outbound Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trinetra-alerts",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-trinetra",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "trinetra-alerts-webhook"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.kind }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "analysis_done",
+              "outputKey": "analysis_done"
+            },
+            {
+              "value2": "memory_alert",
+              "outputKey": "memory_alert"
+            },
+            {
+              "value2": "injection_detected",
+              "outputKey": "injection_detected"
+            }
+          ]
+        }
+      },
+      "id": "switch-kind",
+      "name": "Route Event Kind",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🔱 TRINETRA analysed \"{{ $json.title }}\": {{ $json.iocs }} IOCs, {{ $json.techniques }} techniques. {{ $json.link }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-analysis-done",
+      "name": "Telegram: Analysis Done",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [750, 180]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🔁 {{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-memory-alert",
+      "name": "Telegram: Memory Contradiction",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [750, 320]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=⚠️ Prompt-injection attempt in \"{{ $json.title }}\" ({{ $json.technique_id }})",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-injection",
+      "name": "Telegram: Injection Detected",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [750, 460]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}/export/stix",
+        "options": {}
+      },
+      "id": "fetch-stix",
+      "name": "Fetch STIX Bundle",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 180]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route Event Kind",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Event Kind": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Analysis Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Memory Contradiction",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Injection Detected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Analysis Done": {
+      "main": [
+        [
+          {
+            "node": "Fetch STIX Bundle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+
