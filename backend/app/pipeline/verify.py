@@ -174,10 +174,20 @@ async def _verify_behaviour(text: str, behaviour: Behaviour, behaviour_id: str |
                              name=ordered[by_score[r.technique_id]].name))
 
 
-async def _mock_results(on_result: Callable[[TechniqueMatch], Awaitable[None]] | None,
+async def _mock_results(text: str, on_result: Callable[[TechniqueMatch], Awaitable[None]] | None,
                         ) -> list[TechniqueMatch]:
-    """Offline mode: without an LLM there is nothing to verify, so serve the sample."""
-    techniques = sample_analysis().techniques
+    """Offline mode: without an LLM, serve the sample, but only what this report really says.
+
+    The golden rule holds here too: a sample quote that isn't in the text is dropped.
+    """
+    techniques = []
+    for t in sample_analysis().techniques:
+        if t.evidence is not None:
+            found = find_quote(text, t.evidence.quote)
+            if found is None:
+                continue
+            t.evidence = found[0]
+        techniques.append(t)
     for t in techniques:
         if on_result:
             await on_result(t)
@@ -191,7 +201,7 @@ async def verify_all(text: str, behaviours: list[Behaviour], candidates: dict[st
                      ) -> list[TechniqueMatch]:
     """Accepted and rejected matches; on_result fires for each so the UI streams both."""
     if not settings.llm_api_key:
-        return await _mock_results(on_result)
+        return await _mock_results(text, on_result)
 
     results: list[TechniqueMatch] = []
 

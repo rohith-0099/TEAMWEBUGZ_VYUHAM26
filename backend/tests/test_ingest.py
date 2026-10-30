@@ -17,7 +17,7 @@ def test_extract_publisher_domain():
     assert _extract_publisher_domain("https://www.cisa.gov/news-events/advisories/aa24-001a") == "cisa.gov"
     assert _extract_publisher_domain("http://intel.cert-in.org.in:8080/reports/123") == "intel.cert-in.org.in"
     assert _extract_publisher_domain("https://microsoft.com/security/blog") == "microsoft.com"
-    assert _extract_publisher_domain("invalid-url") == "invalid-url"
+    assert _extract_publisher_domain("invalid-url") is None
 
 
 def test_parse_iso_date():

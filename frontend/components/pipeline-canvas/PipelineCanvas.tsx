@@ -76,7 +76,9 @@ export function PipelineCanvas() {
   const recentLogs = useMemo(() => log.slice(-3).reverse(), [log]);
 
   const activeCount = Object.values(stages).filter((s) => s.status === "started" || s.status === "progress").length;
-  const doneCount = Object.values(stages).filter((s) => s.status === "done").length;
+  const doneCount = Object.entries(stages).filter(
+    ([name, s]) => name !== "pipeline" && s.status === "done",
+  ).length;
 
   return (
     <div className="flex flex-col rounded-xl border bg-card/60 shadow-sm backdrop-blur">

@@ -7,11 +7,16 @@ import React, { useEffect, useState } from "react";
 import Map from "react-map-gl/maplibre";
 import { DeckGL } from "@deck.gl/react";
 import { ScatterplotLayer, ArcLayer } from "@deck.gl/layers";
+import { setWorkerUrl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { getGeo } from "@/lib/api";
 import type { GeoPoint } from "@/lib/types";
 
 const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
+
+// Turbopack breaks MapLibre's own worker path, so serve a copy from public/.
+// Update public/maplibre-gl-worker.mjs whenever maplibre-gl is upgraded.
+setWorkerUrl("/maplibre-gl-worker.mjs");
 
 const IOC_ROLE_COLOR: Record<string, [number, number, number, number]> = {
   c2: [248, 113, 113, 230],

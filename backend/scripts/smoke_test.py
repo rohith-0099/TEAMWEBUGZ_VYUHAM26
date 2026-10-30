@@ -1,20 +1,23 @@
 """End-to-end check: POST sample text, follow /events to pipeline:done, GET the analysis.
 
 Usage: python scripts/smoke_test.py   (exit code != 0 on failure)
-Owner: Lead. Only needs httpx, so it also runs outside the container.
+Owner: Lead.
 """
 import json
 import os
 import sys
+from pathlib import Path
 
 import httpx
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # so `app` imports from scripts/
+
+from app.mocks import SAMPLE_TEXT  # noqa: E402
 
 BASE = os.environ.get("SMOKE_BASE_URL", "http://localhost:8000")
 TIMEOUT_S = 180
 STAGES = ["ingest", "guard", "ioc", "ioc_role", "behaviours", "retrieve", "verify", "link",
           "migrate", "tie", "flow", "detect", "memory", "export"]
-SAMPLE_TEXT = ("The operators sent spearphishing emails, ran an encoded PowerShell command and "
-               "beaconed to hxxp://evil[.]example/gate.php before encrypting files. " * 3)
 
 
 def fail(message: str) -> None:

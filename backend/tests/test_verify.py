@@ -1,6 +1,7 @@
 import pytest
 
 from app.llm import LLMError
+from app.mocks import SAMPLE_TEXT
 from app.models import IOC, Behaviour, Candidate, Evidence
 from app.pipeline import verify
 from app.pipeline.verify import _Match, _Out, _Rej
@@ -186,5 +187,12 @@ async def test_all_calls_failing_is_a_pipeline_error(answer):
 async def test_offline_mode_serves_the_sample(monkeypatch):
     from app.config import settings
     monkeypatch.setattr(settings, "llm_api_key", "")
-    results = await verify.verify_all("", [], {}, [], [])
+    results = await verify.verify_all(SAMPLE_TEXT, [], {}, [], [])
     assert sum(t.status == "accepted" for t in results) == 8
+
+
+async def test_offline_mode_never_serves_quotes_missing_from_the_report(monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "llm_api_key", "")
+    results = await verify.verify_all("A report about something else entirely.", [], {}, [], [])
+    assert all(t.evidence is None and t.status == "rejected" for t in results)

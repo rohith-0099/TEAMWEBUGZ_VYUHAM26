@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -27,9 +28,8 @@ import { AttackFlowView } from "@/components/attack-flow";
 import { AttackHeatmap } from "@/components/attack-heatmap";
 import { DetectionPanel } from "@/components/detection-panel";
 import { ExportDropdown } from "@/components/exports";
-import { GlobeView } from "@/components/globe";
 import { IocTable } from "@/components/ioc-table";
-import { ContradictionCard } from "@/components/memory-graph";
+import { ContradictionCard } from "@/components/memory-graph/ContradictionCard";
 import { PipelineCanvas } from "@/components/pipeline-canvas";
 import { ReportViewer } from "@/components/report-viewer";
 import { TechniqueCards } from "@/components/technique-card";
@@ -37,6 +37,9 @@ import { getAnalysis } from "@/lib/api";
 import { useAnalysisStream } from "@/lib/sse";
 import { useAnalysisStore } from "@/lib/store";
 import type { MemoryAlert } from "@/lib/types";
+
+// deck.gl and MapLibre touch WebGL as soon as they load, so they can only run in the browser.
+const GlobeView = dynamic(() => import("@/components/globe").then((m) => m.GlobeView), { ssr: false });
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -92,7 +95,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }, [acceptedTechniques]);
 
   const totalTimeMs = useMemo(() => {
-    return Object.values(stages).reduce((acc, s) => acc + (s.ms || 0), 0);
+    // Each stage's ms is time since the run started, so the largest is the total.
+    return Object.values(stages).reduce((acc, s) => Math.max(acc, s.ms || 0), 0);
   }, [stages]);
 
   const copyRawJson = () => {

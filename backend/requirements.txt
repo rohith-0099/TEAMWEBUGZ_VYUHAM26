@@ -18,3 +18,9 @@ pytest
 pytest-asyncio
 pysigma
 pysigma-backend-splunk
+firecrawl-py
+trafilatura
+pdfplumber
+iocsearcher
+stix2
+maxminddb
