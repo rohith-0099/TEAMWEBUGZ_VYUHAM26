@@ -7,8 +7,10 @@ import re
 from pydantic import BaseModel
 from rapidfuzz import fuzz
 
+from app.attack import store
 from app.llm import complete_json, wrap_report, UNTRUSTED_RULE
-from app.models import Behaviour
+from app.models import Behaviour, Evidence
+from app.utils.sections import _heading_lines, in_reference_section, is_listing
 from app.utils.quotes import find_quote
 
 logger = logging.getLogger(__name__)
@@ -20,10 +22,15 @@ Rules:
 - Copy the quote VERBATIM from the report: same words, same order, no paraphrase, no added words. 1-3 sentences.
 - One behaviour per distinct action. Split sentences that describe several actions into several behaviours with the same quote.
 - SKIP: defensive recommendations, mitigations, detection advice, generic background, vendor marketing,
-  descriptions of what defenders should do, and lists that only name ATT&CK IDs without describing an action.
+  and descriptions of what defenders should do.
+- NEVER use ATT&CK tables, appendices, technique lists or reference lists as quotes. A line that only gives a
+  technique ID (T1234) or a technique name is not a behaviour. The quote must describe what the attacker did.
 - Do not guess techniques or IDs. Do not invent behaviours not stated in the text.
 - If nothing qualifies, return an empty list.
 {UNTRUSTED_RULE}"""
+
+
+MAX_BEHAVIOURS = 30
 
 
 class _B(BaseModel):
@@ -116,6 +123,7 @@ async def extract_behaviours(
                 user=user_prompt,
                 schema=_Out,
                 model="extract",
+                max_tokens=3000,
             )
             return [(b, chunk_start) for b in res.behaviours]
         except Exception as exc:
@@ -154,9 +162,19 @@ async def extract_behaviours(
         if not is_dup:
             deduped.append((summary, ev))
 
-    # Sort by evidence.start, cap at 60
-    deduped.sort(key=lambda item: item[1].start)
-    deduped = deduped[:60]
+    # Lists of technique IDs/names are not evidence (CISA ATT&CK mapping best practices).
+    headings = _heading_lines(text)
+    names = store.technique_names()
+    kept = []
+    for summary, ev in deduped:
+        if is_listing(ev.quote, names) or in_reference_section(text, ev.start, headings):
+            logger.debug(f"Dropped listing/appendix quote: {ev.quote[:60]}")
+            continue
+        kept.append((summary, ev))
+
+    # Sort by evidence.start, cap: the verifier makes one call per BATCH of behaviours
+    kept.sort(key=lambda item: item[1].start)
+    deduped = kept[:MAX_BEHAVIOURS]
 
     final_behaviours: list[Behaviour] = []
     for idx, (summary, ev) in enumerate(deduped, start=1):

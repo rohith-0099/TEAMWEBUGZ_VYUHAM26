@@ -42,14 +42,16 @@ def _get_geo_reader():
     return _geo_reader
 
 
-def geo_points(analysis: ReportAnalysis) -> list[dict]:
+def geo_points(analysis: ReportAnalysis) -> dict:
     """Extract geographical coordinates for non-filtered IPv4 and IPv6 IOCs.
 
-    Returns GeoPoint[]: {ioc_id, display, lat, lon, country, city, role}
+    Returns {available, points: GeoPoint[]}. An IP the database cannot place gets no point.
     Strictly offline; never contacts remote hosts or resolves domain names.
     """
     points: list[dict] = []
     reader = _get_geo_reader()
+    if reader is None:
+        return {"available": False, "points": []}
 
     for ioc in analysis.iocs:
         if ioc.filtered_reason:
@@ -60,23 +62,19 @@ def geo_points(analysis: ReportAnalysis) -> list[dict]:
         lat, lon = None, None
         country, city = "Unknown", None
 
-        if reader is not None:
-            try:
-                record = reader.get(ioc.value)
-                if record:
-                    loc = record.get("location", {})
-                    lat = loc.get("latitude")
-                    lon = loc.get("longitude")
-                    country = record.get("country", {}).get("iso_code") or record.get("registered_country", {}).get("iso_code") or "Unknown"
-                    city = record.get("city", {}).get("names", {}).get("en")
-            except Exception:
-                pass
+        try:
+            record = reader.get(ioc.value)
+            if record:
+                loc = record.get("location", {})
+                lat = loc.get("latitude")
+                lon = loc.get("longitude")
+                country = record.get("country", {}).get("iso_code") or record.get("registered_country", {}).get("iso_code") or "Unknown"
+                city = record.get("city", {}).get("names", {}).get("en")
+        except Exception:
+            pass
 
-        # If reader is unavailable or IP is unmapped in offline DB, provide default coordinate if valid
         if lat is None or lon is None:
-            # Deterministic mock/fallback placeholder for UI globe rendering during development
-            lat, lon = 37.7749, -122.4194  # Default fallback point
-            country = "US"
+            continue
 
         points.append({
             "ioc_id": ioc.id,
@@ -88,4 +86,4 @@ def geo_points(analysis: ReportAnalysis) -> list[dict]:
             "role": ioc.role,
         })
 
-    return points
+    return {"available": bool(points), "points": points}

@@ -29,7 +29,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AttackFlowView } from "@/components/attack-flow";
 import { StatCard } from "@/components/charts";
+import { BriefingCard } from "@/components/report-overview/BriefingCard";
+import { CveCards } from "@/components/report-overview/CveCards";
 import { FilterStream } from "@/components/report-overview/FilterStream";
+import { GlossaryHint } from "@/components/ui/glossary-hint";
 import { TacticRadarCard } from "@/components/report-overview/TacticRadarCard";
 import { TacticTiles } from "@/components/report-overview/TacticTiles";
 import { AttackHeatmap } from "@/components/attack-heatmap";
@@ -40,7 +43,9 @@ import { ContradictionCard } from "@/components/memory-graph/ContradictionCard";
 import { PipelineCanvas } from "@/components/pipeline-canvas";
 import { ReportViewer } from "@/components/report-viewer";
 import { TechniqueCards } from "@/components/technique-card";
-import { getAnalysis } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { getAnalysis, getGeo } from "@/lib/api";
+import { countHallucinations } from "@/lib/hallucinations";
 import { useAnalysisStream } from "@/lib/sse";
 import { useAnalysisStore } from "@/lib/store";
 import type { MemoryAlert } from "@/lib/types";
@@ -81,15 +86,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     [analysis.iocs]
   );
 
-  const hallucinationsBlocked = useMemo(
-    () =>
-      (analysis.techniques || []).filter(
-        (t) =>
-          t.status === "rejected" &&
-          (t.reject_reason === "id_not_in_v20" || t.reject_reason === "quote_not_in_source")
-      ).length,
-    [analysis.techniques]
-  );
+  const hallucinationsBlocked = useMemo(() => countHallucinations(analysis.techniques), [analysis.techniques]);
+
+  // The Map tab exists only when the offline GeoIP database placed at least one IP.
+  const { data: geo } = useQuery({ queryKey: ["geo", id], queryFn: () => getGeo(id), enabled: finished });
+  const mapAvailable = geo?.available === true;
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
+  const [showImages, setShowImages] = useState(false);
 
   const coveredTacticsCount = useMemo(() => {
     const tactics = new Set<string>();
@@ -118,6 +121,9 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   const injectionFlags = analysis.injection_flags || [];
   const memoryAlerts = analysis.memory_alerts || [];
+  const duplicateNotice = memoryAlerts.find((a) => a.type === "duplicate_report");
+  const MAX_ALERT_CHIPS = 3;
+  const visibleAlerts = showAllAlerts ? memoryAlerts : memoryAlerts.slice(0, MAX_ALERT_CHIPS);
 
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -190,11 +196,57 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           </div>
         )}
 
+        {/* Text read from images (OCR) */}
+        {(analysis.images?.some((i) => i.used) || analysis.ocr_status?.startsWith("unavailable")) && (
+          <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+            {analysis.ocr_status?.startsWith("unavailable") ? (
+              <span title={analysis.ocr_status}>
+                Images not read ({analysis.ocr_status.replace(/^unavailable:\s*/, "")}). Text inside images is not analysed.
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowImages(!showImages)}
+                className="w-fit text-left hover:text-foreground"
+              >
+                Read text from {analysis.images!.filter((i) => i.used).length} image
+                {analysis.images!.filter((i) => i.used).length === 1 ? "" : "s"} (OCR) {showImages ? "▲" : "▼"}
+              </button>
+            )}
+            {showImages && (
+              <ul className="ml-4 list-disc">
+                {analysis.images!.map((img) => (
+                  <li key={img.index}>
+                    Image {img.index}:{" "}
+                    {/^https?:\/\//.test(img.source) ? (
+                      <a href={img.source} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        {img.source}
+                      </a>
+                    ) : (
+                      img.source
+                    )}{" "}
+                    — {img.used ? `${img.chars} characters read` : "no readable text"}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
         {/* Cross-Report Memory Alerts (S5) */}
-        {memoryAlerts.length > 0 && (
+        {duplicateNotice && (
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Repeat className="size-3.5" />
+            <span>{duplicateNotice.message}.</span>
+            <Link href={`/report/${duplicateNotice.entity_key}`} className="text-primary hover:underline">
+              Open the earlier analysis
+            </Link>
+          </div>
+        )}
+        {!duplicateNotice && memoryAlerts.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">Memory:</span>
-            {memoryAlerts.map((alert, idx) => {
+            {visibleAlerts.map((alert, idx) => {
               if (alert.type === "seen_before") {
                 return (
                   <Link
@@ -218,16 +270,24 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                 </button>
               );
             })}
+            {memoryAlerts.length > MAX_ALERT_CHIPS && (
+              <button
+                onClick={() => setShowAllAlerts(!showAllAlerts)}
+                className="rounded-full border px-3 py-1 font-mono text-xs text-muted-foreground hover:text-foreground"
+              >
+                {showAllAlerts ? "Show fewer" : `+${memoryAlerts.length - MAX_ALERT_CHIPS} more`}
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* Five numbers */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatCard label="Indicators" value={nonFilteredIocs.length} hint="Cleaned and defanged" icon={Fingerprint} />
-        <StatCard label="Techniques" value={acceptedTechniques.length} hint="Verified against ATT&CK v20" tone="primary" icon={Swords} />
-        <StatCard label="Tactics" value={coveredTacticsCount} unit="/15" hint="Matrix coverage" icon={Grid3x3} />
-        <StatCard label="Hallucinations blocked" value={hallucinationsBlocked} hint="Fake IDs and fake quotes" tone="danger" icon={ShieldX} />
+        <StatCard label="Indicators" term={<GlossaryHint term="ioc" />} value={nonFilteredIocs.length} hint="Cleaned and defanged" icon={Fingerprint} />
+        <StatCard label="Techniques" term={<GlossaryHint term="technique" />} value={acceptedTechniques.length} hint="Verified against ATT&CK v20" tone="primary" icon={Swords} />
+        <StatCard label="Tactics" term={<GlossaryHint term="tactic" />} value={coveredTacticsCount} unit="/15" hint="Matrix coverage" icon={Grid3x3} />
+        <StatCard label="Hallucinations blocked" term={<GlossaryHint term="hallucinations" />} value={hallucinationsBlocked} hint="Fake IDs and fake quotes" tone="danger" icon={ShieldX} />
         <StatCard
           label="Latency"
           value={totalTimeMs > 0 ? (totalTimeMs / 1000).toFixed(1) : "–"}
@@ -238,11 +298,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         />
       </div>
 
-      {/* Pipeline + radar */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]">
-        <PipelineCanvas />
-        <TacticRadarCard />
-      </div>
+      <PipelineCanvas />
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-w-0 flex-col gap-4">
@@ -259,9 +315,11 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           <TabsTrigger value="detections" className="flex-none text-xs font-semibold">
             Detections
           </TabsTrigger>
-          <TabsTrigger value="map" className="flex-none text-xs font-semibold">
-            Map
-          </TabsTrigger>
+          {mapAvailable && (
+            <TabsTrigger value="map" className="flex-none text-xs font-semibold">
+              Map
+            </TabsTrigger>
+          )}
           <TabsTrigger value="raw" className="flex-none text-xs font-semibold">
             Raw
           </TabsTrigger>
@@ -269,7 +327,23 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="flex min-w-0 flex-col gap-6">
-          <FilterStream />
+          <BriefingCard
+            onSeeProof={(start) => {
+              setActiveTab("evidence");
+              // The Evidence tab mounts on the next frame; then bring the quote into view.
+              setTimeout(() => {
+                const el = document.getElementById(`span-${start}`);
+                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                el?.classList.add("ring-2", "ring-primary");
+                setTimeout(() => el?.classList.remove("ring-2", "ring-primary"), 1500);
+              }, 150);
+            }}
+          />
+          <CveCards />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]">
+            <FilterStream />
+            <TacticRadarCard />
+          </div>
           <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <IocTable iocs={analysis.iocs} />
             <TacticTiles />
@@ -301,11 +375,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         </TabsContent>
 
         {/* Map Tab (Frontend B Slot) */}
-        <TabsContent value="map">
-          <div className="rounded-[20px] border bg-card p-4">
-            <GlobeView analysisId={id} />
-          </div>
-        </TabsContent>
+        {mapAvailable && (
+          <TabsContent value="map">
+            <div className="rounded-[20px] border bg-card p-4">
+              <GlobeView analysisId={id} />
+            </div>
+          </TabsContent>
+        )}
 
         {/* Raw Tab */}
         <TabsContent value="raw">

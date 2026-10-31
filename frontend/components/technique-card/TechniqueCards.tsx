@@ -13,7 +13,9 @@ import {
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SourceLink } from "@/components/ui/source-link";
 import { sendFeedback } from "@/lib/api";
+import { countHallucinations } from "@/lib/hallucinations";
 import { useAnalysisStore } from "@/lib/store";
 import { useTactics } from "@/lib/tactics";
 import type { RejectReason, TechniqueMatch } from "@/lib/types";
@@ -49,6 +51,7 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
 
   const accepted = useMemo(() => techniques.filter((t) => t.status === "accepted"), [techniques]);
   const rejected = useMemo(() => techniques.filter((t) => t.status === "rejected"), [techniques]);
+  const hallucinations = useMemo(() => countHallucinations(techniques), [techniques]);
 
   // Group accepted techniques by tactic in matrix order (ord)
   const groupedByTactic = useMemo(() => {
@@ -105,7 +108,7 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
                 <span className="font-mono line-through text-destructive">{m.old_id}</span>
                 {" → "}
                 <span className="font-mono font-semibold text-foreground">{m.new_ids.join(", ")}</span>:{" "}
-                {m.reason}
+                {m.reason} <SourceLink sourceKey={m.source_key ?? "attack_v20"} showWhy={false} />
               </p>
             ))}
           </div>
@@ -132,7 +135,7 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
             className="text-xs text-muted-foreground hover:text-foreground"
           >
             <AlertOctagon className="mr-1.5 size-3.5 text-destructive" />
-            {showRejected ? "Hide" : "Show"} Hallucinations Blocked ({rejected.length})
+            {showRejected ? "Hide" : "Show"} rejected ({rejected.length}) · {hallucinations} hallucinations blocked
           </Button>
         )}
       </div>
@@ -312,11 +315,11 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
             <div className="flex items-center gap-2">
               <AlertOctagon className="size-4 text-destructive" />
               <h3 className="font-heading text-xs font-semibold text-destructive">
-                Hallucinated / Rejected Candidates Filtered ({rejected.length})
+                Rejected candidates ({rejected.length}) · {hallucinations} hallucinations blocked
               </h3>
             </div>
             <span className="font-mono text-[10px] text-muted-foreground">
-              Guaranteed by Verifier
+              Hallucination = made-up ID or quote
             </span>
           </div>
 
@@ -346,6 +349,7 @@ export function TechniqueCards({ techniques: propTechniques, onSelectTab }: Tech
                   {tech.rationale && (
                     <p className="text-[11px] italic text-muted-foreground">{tech.rationale}</p>
                   )}
+                  <SourceLink sourceKey={tech.source_key} reason={tech.reject_reason} />
                 </div>
               );
             })}

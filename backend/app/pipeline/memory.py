@@ -5,6 +5,7 @@ so alerts say "conflicting claims".
 """
 import asyncio
 from datetime import datetime, timedelta, timezone
+import hashlib
 
 from psycopg.types.json import Jsonb
 
@@ -17,6 +18,12 @@ CONTRADICTION_WINDOW = timedelta(days=180)
 MAX_ALERT_NOTIFICATIONS = 3
 QUOTE_CHARS = 400
 
+# ReportAnalysis.text is already normalised by ingest.
+_SAME_TEXT = """
+    SELECT id, title, published_at, created_at FROM analyses
+    WHERE id <> %s AND status = 'done'
+      AND encode(sha256(convert_to(result->>'text', 'UTF8')), 'hex') = %s
+    ORDER BY created_at LIMIT 1"""
 _PRIOR_MENTIONS = """
     SELECT e.report_id, e.valid_from, e.evidence, a.title, a.published_at
     FROM mem_edges e JOIN analyses a ON a.id = e.report_id
@@ -66,6 +73,19 @@ def _far_apart(a: datetime | None, b: datetime | None) -> bool:
     return bool(a and b) and abs(a - b) > CONTRADICTION_WINDOW
 
 
+def _duplicate_alert(conn, a: ReportAnalysis) -> MemoryAlert | None:
+    """Re-analysing the same text proves nothing new, so it gets one notice and no graph edges."""
+    digest = hashlib.sha256(a.text.encode()).hexdigest()
+    row = conn.execute(_SAME_TEXT, (a.report_id, digest)).fetchone()
+    if row is None:
+        return None
+    return MemoryAlert(
+        type="duplicate_report", entity_type="report", entity_key=row["id"], entity_display=row["title"],
+        message=f"This report was already analysed on {row['created_at']:%d %b %Y}",
+        reports=[ReportRef(report_id=row["id"], title=row["title"], published_at=row["published_at"])],
+    )
+
+
 def _write(a: ReportAnalysis) -> list[MemoryAlert]:
     seen = a.published_at or a.created_at or datetime.now(timezone.utc)
     current = ReportRef(report_id=a.report_id, title=a.title, published_at=a.published_at)
@@ -77,6 +97,10 @@ def _write(a: ReportAnalysis) -> list[MemoryAlert]:
 
     alerts: list[MemoryAlert] = []
     with db.pool.connection() as conn:
+        duplicate = _duplicate_alert(conn, a)
+        if duplicate:
+            return [duplicate]
+
         report_node = _upsert_node(conn, "report", a.report_id, a.title, seen)
 
         technique_nodes = {}

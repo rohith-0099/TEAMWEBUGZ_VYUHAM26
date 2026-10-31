@@ -1,5 +1,5 @@
 // Typed client, one function per endpoint in contracts §8. Owner: Frontend A.
-// Mock mode is the default; set NEXT_PUBLIC_USE_MOCKS=false to talk to the backend.
+// Talks to the backend. Mock data is served only when NEXT_PUBLIC_USE_MOCKS=true.
 import analysisMock from "@/lib/mock/analysis.json";
 import evalMock from "@/lib/mock/eval.json";
 import geoMock from "@/lib/mock/geo.json";
@@ -9,12 +9,12 @@ import readinessMock from "@/lib/mock/readiness.json";
 import simulateMock from "@/lib/mock/simulate.json";
 import tacticsMock from "@/lib/mock/tactics.json";
 import type {
-  AnalysisListItem, EvalResponse, GeoPoint, GraphResponse, ReadinessResponse, ReportAnalysis,
+  AnalysisListItem, EvalResponse, GeoResponse, SourcesResponse, GraphResponse, ReadinessResponse, ReportAnalysis,
   SimulateResponse, Tactic, TechniqueDetail, Telemetry,
 } from "@/lib/types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== "false";
+export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -123,8 +123,8 @@ export async function getEval(): Promise<EvalResponse> {
   return request("/eval");
 }
 
-export async function getGeo(id: string): Promise<GeoPoint[]> {
-  if (USE_MOCKS) return mock(geoMock);
+export async function getGeo(id: string): Promise<GeoResponse> {
+  if (USE_MOCKS) return mock({ available: true, points: geoMock });
   return request(`/analyses/${id}/geo`);
 }
 
@@ -133,4 +133,8 @@ export type HealthResponse = { ok: boolean; attack_loaded: boolean; techniques: 
 export async function getHealth(): Promise<HealthResponse> {
   if (USE_MOCKS) return mock({ ok: true, attack_loaded: true, techniques: 227 });
   return request("/health");
+}
+
+export async function getSources(): Promise<SourcesResponse> {
+  return request("/sources");
 }

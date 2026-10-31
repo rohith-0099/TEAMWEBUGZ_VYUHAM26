@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -9,19 +9,19 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ChevronDown, ChevronUp, Terminal, Workflow } from "lucide-react";
+import { ChevronDown, ChevronUp, Maximize2, Minimize2, Terminal, Workflow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BracketChip } from "@/components/charts";
 import { useAnalysisStore } from "@/lib/store";
 import { tacticColor } from "@/lib/tactics";
+import { cn } from "@/lib/utils";
 import type { StageName } from "@/lib/types";
 import { NodeSheet } from "./NodeSheet";
 import { PipelineNode } from "./PipelineNode";
 import { PIPELINE_EDGES, STAGES_CONFIG, STAGE_ORDER } from "./stages";
 
-// Tighter than the stage coordinates, so the canvas fits beside the radar at a readable zoom.
-const NODE_X_SPREAD = 0.86;
-const NODE_Y_SPREAD = 1.5;
+// Below this the labels stop being readable, so narrow screens pan instead of shrinking further.
+const MIN_ZOOM = 0.55;
 
 const nodeTypes = {
   pipelineNode: PipelineNode,
@@ -31,7 +31,17 @@ export function PipelineCanvas() {
   const stages = useAnalysisStore((state) => state.stages);
   const log = useAnalysisStore((state) => state.log);
   const [collapsed, setCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [selectedStage, setSelectedStage] = useState<StageName | null>(null);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpanded(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [expanded]);
 
   const nodes: Node[] = useMemo(() => {
     return Object.values(STAGES_CONFIG).map((meta) => {
@@ -39,7 +49,7 @@ export function PipelineCanvas() {
       return {
         id: meta.id,
         type: "pipelineNode",
-        position: { x: meta.x * NODE_X_SPREAD, y: meta.y * NODE_Y_SPREAD },
+        position: { x: meta.x, y: meta.y },
         data: {
           meta,
           status: stageState.status,
@@ -86,31 +96,59 @@ export function PipelineCanvas() {
   ).length;
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-[20px] border bg-card">
+    <section
+      className={cn(
+        "flex min-w-0 flex-col overflow-hidden rounded-[20px] border bg-card",
+        expanded && "fixed inset-4 z-50 shadow-2xl",
+      )}
+    >
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Workflow className="size-4 text-muted-foreground" aria-hidden="true" />
           <h2 className="console-title">Pipeline</h2>
           <BracketChip>
-            {doneCount}/14 done{activeCount > 0 && `, ${activeCount} running`}
+            {doneCount}/{STAGE_ORDER.length - 1} done{activeCount > 0 && `, ${activeCount} running`}
           </BracketChip>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="size-7 p-0 text-muted-foreground hover:text-foreground"
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? "Expand canvas" : "Collapse canvas"}
-        >
-          {collapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="size-7 p-0 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setCollapsed(false);
+              setExpanded(!expanded);
+            }}
+            aria-label={expanded ? "Exit full screen" : "View full screen"}
+          >
+            {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </Button>
+          {!expanded && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-7 p-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? "Expand canvas" : "Collapse canvas"}
+            >
+              {collapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+            </Button>
+          )}
+        </div>
       </div>
 
       {!collapsed && (
         <>
-          <div className="h-[300px] w-full overflow-hidden bg-black">
+          <div
+            className={cn(
+              "w-full overflow-hidden bg-black",
+              expanded ? "min-h-0 flex-1" : "aspect-[7/2] min-h-[340px]",
+            )}
+          >
+            {/* key remounts on resize so fitView runs again */}
             <ReactFlow
+              key={expanded ? "expanded" : "inline"}
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
@@ -120,9 +158,9 @@ export function PipelineCanvas() {
               zoomOnScroll={false}
               panOnScroll={false}
               panOnDrag={true}
-              minZoom={0.2}
+              minZoom={MIN_ZOOM}
               fitView
-              fitViewOptions={{ padding: 0.04, minZoom: 0.2 }}
+              fitViewOptions={{ padding: 0.04, minZoom: MIN_ZOOM, maxZoom: 1.2 }}
               proOptions={{ hideAttribution: true }}
             >
               <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#1F1F1F" />

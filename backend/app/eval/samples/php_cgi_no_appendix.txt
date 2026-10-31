@@ -1,0 +1,450 @@
+TLP:CLEAR
+
+Threat Intelligence Report: Exploitation of CVE-2024-4577
+(PHP-CGI Argument Injection) by Ransomware, Commodity
+Malware and a Persistent Intrusion Set
+Report date: 30 October 2026 | Coverage: June 2024 to March 2025 | Sources: Imperva, Akamai SIRT, Cisco Talos, Cyble, CISA
+KEV (see References)
+Compiled as a realistic test input for the TRINETRA platform. All events, indicators and dates below come from public vendor reporting;
+the narrative is written in our own words. Indicators are defanged.
+
+1. Executive summary
+CVE-2024-4577 is a critical argument-injection flaw in PHP when it runs in CGI mode on Windows. It was patched
+on 6 June 2024, a public proof of concept appeared the next day, and attackers began exploiting it on 8 June 2024.
+CISA added it to the Known Exploited Vulnerabilities catalog on 12 June 2024 and flags it as used in ransomware
+campaigns.
+This report covers three strands of activity: (1) the TellYouThePass ransomware operation, which used the flaw to
+run mshta.exe and deploy an in-memory .NET ransomware payload; (2) opportunistic commodity malware (Gh0st
+RAT, the RedTail cryptominer, the Muhstik botnet and an XMRig miner); and (3) an unattributed intrusion set that,
+from January 2025, used the flaw against organisations in Japan and followed up with Cobalt Strike, privilege
+escalation, persistence, log clearing, credential dumping and lateral movement.
+
+2. Vulnerability background
+Field
+
+Detail
+
+CVE
+
+CVE-2024-4577
+
+Product
+
+PHP running as CGI on Windows (commonly Apache with PHP-CGI, e.g. XAMPP-style setups)
+
+Affected versions
+
+8.1.x before 8.1.29, 8.2.x before 8.2.20, 8.3.x before 8.3.8
+
+Fixed versions
+
+8.1.29, 8.2.20, 8.3.8
+
+Severity
+
+CVSS v3.1 base score 9.8 (Critical)
+
+Root cause
+
+Windows 'Best-Fit' character conversion maps a soft hyphen (0xAD) to an ASCII hyphen, so a crafted query
+string is read by php-cgi as command-line options.
+
+Discovered by
+
+Orange Tsai (DEVCORE), reported to PHP on 7 May 2024
+
+CISA KEV
+
+Added 12 June 2024; due date 3 July 2024; known ransomware campaign use
+
+In practice the attacker sends a request to the php-cgi endpoint whose query string carries %AD-prefixed options.
+These turn on allow_url_include and point auto_prepend_file at php://input, so PHP code in the
+request body is executed. The result is unauthenticated remote code execution on the web server.
+
+3. Timeline
+Date
+
+Event
+
+7 May 2024
+
+Flaw reported to the PHP project by DEVCORE
+
+6 June 2024
+
+PHP releases fixed versions 8.1.29, 8.2.20, 8.3.8
+
+7 June 2024
+
+Public proof-of-concept exploit published by watchTowr Labs
+
+8 June 2024
+
+First in-the-wild exploitation observed, delivering TellYouThePass ransomware
+
+9 June 2024
+
+Akamai honeypots record a Gh0st RAT delivery attempt via the flaw
+
+12 June 2024
+
+CISA adds CVE-2024-4577 to the KEV catalog
+
+June to July 2024
+
+RedTail cryptominer, Muhstik and XMRig activity observed exploiting the flaw
+
+January 2025
+
+Unattributed intrusion set begins targeting organisations in Japan
+
+6 March 2025
+
+Cisco Talos publishes analysis of the Japan-focused intrusions
+
+4. Campaign A: TellYouThePass ransomware (June 2024)
+TellYouThePass is a ransomware family active since 2019 against both Windows and Linux. The operators have a
+history of riding newly published, widely exploitable bugs such as Log4Shell (CVE-2021-44228) and the Apache
+ActiveMQ flaw CVE-2023-46604, and they adopted CVE-2024-4577 within two days of its fix.
+The attackers exploited the PHP-CGI flaw to run PHP code that called the PHP system function. That command
+launched the built-in Windows binary mshta.exe and pointed it at an HTML Application file, dd3.hta, hosted at
+hxxp://88.218.76[.]13/dd3.hta. Using mshta.exe let the operators execute remote script content through a trusted,
+signed Microsoft program.
+The HTA file contained VBScript holding a long base64-encoded blob. When decoded, the blob produced a
+serialized loader that mapped a Portable Executable directly into memory without writing it to disk. The in-memory
+payload is a .NET build of TellYouThePass.
+On first run, the ransomware sent the victim's system details to its command-and-control server at 88.218.76[.]13
+over HTTP, dressing the request up to look like an ordinary request for CSS files. It then walked the file system,
+listed running processes and terminated those that could lock files, generated encryption keys, and encrypted files
+matching its target extensions in every directory. Finally it dropped a ransom note named READ_ME10.html into
+the web root, so visitors to the compromised website saw the demand. Payment was requested to the Bitcoin
+address bc1qnuxx83nd4keeegrumtnu8kup8g02yzgff6z53l. In some cases the operators also tried to upload web
+shells to keep access to the server.
+
+5. Campaign B: opportunistic commodity malware (June to July 2024)
+Gh0st RAT.
+Within a day of disclosure, an attacker sent an exploit request to /cgi-bin/php-cgi.exe using the user agent
+python-requests/2.22.0. The injected PHP ran certutil.exe with its URL-cache option to download phps.exe from
+hxxp://147.50.253[.]109:44119/phps.exe, saved it as phpsm.exe and started it. The malware dropped a
+UPX-packed executable named Iqgqosc.exe, enumerated drives and attached peripherals, queried the registry,
+renamed itself to a file named after its own SHA-256 hash, and then beaconed to its command-and-control server
+at 146.19.100[.]7 on the non-standard port 8001. The download server sits in a range of addresses carrying
+'BangCloud' certificates that is linked to many other malicious files.
+
+RedTail cryptominer.
+A second actor sent exploit requests to /hello.world with a Linux Firefox user agent. The injected command used
+wget, falling back to curl, to fetch a shell script from hxxp://185.172.128[.]93/sh and piped it straight into sh. The
+script searched for writable directories that allow execution, checked the CPU architecture, downloaded the
+matching RedTail miner binary from the same server and saved it under the hidden name .redtail before running it
+to mine cryptocurrency on the victim's hardware.
+
+Muhstik botnet.
+A third actor, again using python-requests/2.22, sent the exploit to the site root and ran curl to fetch the script 3sh
+from 86.48.2[.]49. The script downloaded an ELF bot named pty3, created working directories such as
+/var/run/pty3 and /dev/shm/pty3, and connected to the command-and-control domain p.findmeatthe[.]top, which
+other researchers have tied to IRC-based control. Muhstik is known for using compromised servers for
+cryptomining and DDoS attacks.
+
+XMRig miner.
+A fourth request to /test.hello carried a base64-encoded PHP command that started PowerShell. PowerShell
+downloaded setup_c3pool_miner.bat from hxxp://download.c3pool[.]org into a temporary file, ran it with the
+attacker's Monero wallet address to install an XMRig miner, and then deleted the batch file to reduce traces.
+
+6. Campaign C: persistent intrusions against organisations in Japan (January
+2025 onward)
+
+Cisco Talos reported an unattributed actor targeting technology, telecommunications, entertainment, education
+and e-commerce organisations, mainly in Japan. Talos noted overlap in tooling with the 'Dark Cloud Shield' / 'You
+Dun' activity but did not attribute the intrusions. The actor's goals appear to go beyond simple credential theft.
+
+Initial access and command and control.
+The actor exploited CVE-2024-4577 with a publicly available Python exploit script
+(PHP-CGI_CVE-2024-4577_RCE.py). The executed PHP code ran a PowerShell command that downloaded
+payload.ps1 from hxxp://38.14.255[.]23:8000/payload.ps1 and loaded it in memory. This injector ran Cobalt Strike
+reverse HTTP shellcode, giving the actor a beacon on the team server at 38.14.255[.]23 (port 8077). A second
+Cobalt Strike team server was hosted at 118.31.18[.]77. The actor used the TaoWu Cobalt Strike plugin kit for
+post-exploitation.
+
+Discovery and privilege escalation.
+Once on the host, the actor ran whoami, dir and net time to learn about the current user and system. To obtain
+SYSTEM privileges they used the JuicyPotato, RottenPotato and SweetPotato tools, which abuse token
+impersonation privileges, and used Ladon.exe to bypass User Account Control.
+
+Persistence.
+The actor kept access in several ways at once: they added a value under the Windows Run registry key, created
+scheduled tasks with sharpTask.exe, hid a registry-based autostart with SharpHide.exe, and installed a Windows
+service with SharpStay.exe.
+
+Defense evasion.
+To hide their tracks the actor used wevtutil to clear the Security, System, Application and Windows PowerShell
+event logs.
+
+Credential access, lateral movement and exfiltration.
+The actor ran Mimikatz to dump plaintext passwords and NTLM hashes from LSASS memory. They scanned
+internal subnets with fscan.exe, collected host details with Seatbelt.exe, and attempted SSH logins using stolen
+keys and password brute forcing, including against port 2222. Using SharpGPOAbuse.exe they created a Group
+Policy scheduled task named 'update' that ran a PowerShell payload on every machine in scope. Collected data
+was sent out over the existing Cobalt Strike command-and-control channel.
+
+Tooling notes.
+The actor's servers also hosted LinuxEnvConfig.sh, an installer that sets the DNS resolver to 114.114.114.114 (a
+public DNS service) and deploys post-exploitation frameworks such as Viper C2 and BeEF. Talos lists these as
+capabilities available to the actor rather than confirmed use in every intrusion. The public exploit script prints the
+MD5 value e10adc3949ba59abbe56e057f20f883e to confirm success; this is simply the MD5 of the string '123456'
+and is not a malware hash. Example values in the tooling, such as the internal range 192.168.1.1/24 and a listener
+on 192.168.1.1:6666, are placeholders and not attacker infrastructure.
+
+7. Indicators of compromise
+All network indicators are defanged. Context-only values from Section 6 (114.114.114.114, the 192.168.1.1 examples and the MD5 of
+'123456') are intentionally not listed below.
+
+7.1 Network indicators
+Indicator
+
+Type
+
+Campaign / role
+
+hxxp://88.218.76[.]13/dd3.hta
+
+URL
+
+A: TellYouThePass HTA download
+
+88.218.76[.]13
+
+IPv4
+
+A: TellYouThePass payload host
+and C2
+
+hxxp://147.50.253[.]109:44119/phps.exe
+
+URL
+
+B: Gh0st RAT download
+
+147.50.253[.]109
+
+IPv4
+
+B: Gh0st RAT download server
+
+146.19.100[.]7
+
+IPv4
+
+B: Gh0st RAT C2 (port 8001)
+
+23.237.182[.]122
+
+IPv4
+
+B: proxy used in Gh0st RAT activity
+
+hxxp://185.172.128[.]93/sh
+
+URL
+
+B: RedTail installer script
+
+185.172.128[.]93
+
+IPv4
+
+B: RedTail script and payload host
+
+86.48.2[.]49
+
+IPv4
+
+B: Muhstik script host (3sh)
+
+147.139.29[.]220
+
+IPv4
+
+B: Muhstik infrastructure
+
+185.201.8[.]176
+
+IPv4
+
+B: Muhstik infrastructure
+
+194.59.165[.]52
+
+IPv4
+
+B: Muhstik infrastructure
+
+156.67.218[.]115
+
+IPv4
+
+B: Muhstik infrastructure
+
+p.findmeatthe[.]top
+
+Domain
+
+B: Muhstik C2
+
+p.deutschland-zahlung[.]eu
+
+Domain
+
+B: Muhstik C2
+
+p.shadow-mods[.]net
+
+Domain
+
+B: Muhstik C2
+
+hxxp://download.c3pool[.]org/xmrig_setup/raw/master/setup_c3pool_miner.bat
+
+URL
+
+B: XMRig installer
+
+hxxp://38.14.255[.]23:8000/payload.ps1
+
+URL
+
+C: PowerShell injector
+
+38.14.255[.]23
+
+IPv4
+
+C: Cobalt Strike team server (ports
+8000, 8077)
+
+118.31.18[.]77
+
+IPv4
+
+C: Cobalt Strike team server
+
+7.2 Additional scanning sources (exploitation attempts)
+51.79.19[.]53 (linked to Muhstik), 14.225.53[.]162, 47.94.155[.]169, 120.92.12[.]14, 101.132.154[.]203, 14.116.254[.]172,
+222.216.206[.]99, 183.56.201[.]169, 39.97.209[.]211, 93.123.118[.]191, 193.143.1[.]88
+
+7.3 File hashes (SHA-256)
+SHA-256
+
+Description
+
+95279881525d4ed4ce25777bb967ab87659e7f72235b76f9530456b48a00bac3
+
+A: dd3.hta sample
+
+5a2b9ddddea96f21d905036761ab27627bd6db4f5973b006f1e39d4acb04a618
+
+A: dd3.hta sample
+
+9562ad2c173b107a2baa7a4986825b52e881a935deb4356bf8b80b1ec6d41c53
+
+A: in-memory .NET TellYouThePass
+
+a646ebf85afa29ae1c77458c575b5e4b0b145d813db028435d33b522edccdc0e
+
+B: Gh0st RAT
+
+2c602147c727621c5e98525466b8ea78832abe2c3de10f0b33ce9a4adea205eb
+
+B: RedTail
+
+0d70a044732a77957eaaf28d9574d75da54ae430d8ad2e4049bd182e13967a6f
+
+B: RedTail
+
+ab897157fdef11b267e986ef286fd44a699e3699a458d90994e020619653d2cd
+
+B: RedTail
+
+9753df3ea4b9948c82310f64ff103685f78af85e3e08bb5f0d0d44047c63c315
+
+B: RedTail
+
+19a06de9a8b66196fa6cc9e86824dee577e462cbeaf36d715c8fea5bcb08b54d
+
+B: RedTail
+
+1ae2fef05798f0f27e9de76fcef0217f282090fab1ba750623ca36b413151434
+
+B: Muhstik 3sh script
+
+9e28f942262805b5fb59f46568fed53fd4b7dbf6faf666bedaf6ff22dd416572
+
+B: Muhstik pty3 ELF
+
+7.4 Host artefacts and other indicators
+Artefact
+
+Context
+
+dd3.hta, READ_ME10.html
+
+A: HTA loader; ransom note written to the web root
+
+Artefact
+
+Context
+
+bc1qnuxx83nd4keeegrumtnu8kup8g02yzgff6z53l
+
+A: ransom payment Bitcoin address
+
+phps.exe, phpsm.exe, Iqgqosc.exe
+
+B: Gh0st RAT files
+
+.redtail, sh
+
+B: RedTail payload and installer
+
+3sh, pty3, /var/run/pty3, /dev/shm/pty3
+
+B: Muhstik files and directories
+
+setup_c3pool_miner.bat
+
+B: XMRig installer
+
+payload.ps1, fscan.exe, Seatbelt.exe, SharpGPOAbuse.exe,
+Ladon.exe, sharpTask.exe, SharpHide.exe, SharpStay.exe
+
+C: post-exploitation tooling
+
+python-requests/2.22.0
+
+B: user agent of exploit requests
+
+8. Recommendations
+• Upgrade PHP to 8.1.29, 8.2.20, 8.3.8 or later; treat this as urgent because the flaw is in the CISA KEV catalog
+with known ransomware use.
+• Avoid running PHP in CGI mode on Windows; prefer PHP-FPM or mod_php, and remove any exposed
+php-cgi.exe from web-accessible paths.
+• Block the network indicators in Section 7 at the firewall, proxy and DNS layers, and search past logs for
+connections to them.
+• Alert on web server processes (httpd.exe, php-cgi.exe) spawning mshta.exe, certutil.exe, powershell.exe,
+cmd.exe, wget or curl.
+• Enable PowerShell script block logging and Sysmon process creation logging, and forward event logs centrally so
+log clearing with wevtutil is detected.
+• Monitor for new Run keys, scheduled tasks, services and Group Policy scheduled tasks, and for access to
+LSASS memory.
+
+References
+Imperva Threat Research, 'Update: CVE-2024-4577 quickly weaponized to distribute TellYouThePass Ransomware', June 2024.
+https://www.imperva.com/blog/update-cve-2024-4577-quickly-weaponized-to-distribute-tellyouthepass-ransomware/
+
+Akamai SIRT, 'CVE-2024-4577 Exploits in the Wild One Day After Disclosure', July 2024.
+https://www.akamai.com/blog/security-research/2024-php-exploit-cve-one-day-after-disclosure
+Cisco Talos, 'Unmasking the new persistent attacks on Japan', March 2025.
+https://blog.talosintelligence.com/new-persistent-attacks-japan/
+Cyble, 'CVE-2024-4577: Ongoing exploitation of a critical PHP vulnerability', June 2024.
+https://cyble.com/blog/cve-2024-4577-ongoing-exploitation-of-a-critical-php-vulnerability/
+CISA Known Exploited Vulnerabilities catalog entry for CVE-2024-4577 (added 12 June 2024).
+

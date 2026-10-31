@@ -3,6 +3,8 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import {
+  Bug,
+  FileText,
   Activity,
   AlertTriangle,
   Bot,
@@ -42,6 +44,8 @@ const STAGE_ICONS: Record<StageName, React.ElementType> = {
   flow: Network,
   detect: Cpu,
   memory: Activity,
+  vulns: Bug,
+  brief: FileText,
   export: Share2,
   pipeline: CheckCircle2,
 };
@@ -72,7 +76,7 @@ export const PipelineNode = memo(function PipelineNode({ data }: NodeProps) {
       aria-label={`${meta.name}: ${status}`}
       style={{ "--stage-color": stageColor } as React.CSSProperties}
       className={cn(
-        "group relative flex w-[136px] cursor-pointer flex-col gap-1.5 rounded-lg border border-dotted border-white/50 bg-black p-2 text-left text-xs transition-colors hover:border-white",
+        "group relative flex w-[152px] cursor-pointer flex-col gap-1.5 rounded-lg border border-dotted border-white/50 bg-black p-2 text-left text-xs transition-colors hover:border-white",
         status === "idle" && "border-white/25 text-muted-foreground",
         isRunning && "stage-running",
         isDone && "border-[var(--stage-color)]",
@@ -84,7 +88,7 @@ export const PipelineNode = memo(function PipelineNode({ data }: NodeProps) {
       <div className="flex items-center justify-between gap-1">
         <div className="flex items-center gap-1.5 truncate font-medium">
           <Icon className={cn("size-3.5 shrink-0", isRunning && "text-[var(--stage-color)]", isDone && "text-[var(--stage-color)]", isError && "text-destructive")} />
-          <span className="truncate text-[11px] font-semibold">{meta.name}</span>
+          <span className="truncate text-xs font-semibold">{meta.name}</span>
         </div>
         <div className="shrink-0">
           {isRunning && <Loader2 className="size-3 animate-spin text-[var(--stage-color)]" />}

@@ -1,0 +1,22 @@
+{
+  "url": "https://www.cisa.gov/news-events/cybersecurity-advisories/aa26-281a",
+  "title": "Chinese Government-linked Cyber Threat Actors Combine Automated and Hands-on Hacking Tools to Steal Sensitive Data",
+  "techniques": [
+    "T1595.002",
+    "T1189",
+    "T1059.001",
+    "T1059.004",
+    "T1059.006",
+    "T1059.007",
+    "T1133",
+    "T1036.003",
+    "T1003.006",
+    "T1110.001",
+    "T1110.003",
+    "T1114.002",
+    "T1560.003",
+    "T1074.001",
+    "T1020"
+  ],
+  "dropped": []
+}

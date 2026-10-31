@@ -1,7 +1,7 @@
 // Collapsible left sidebar — nav reflects the actual routes in this app. Owner: Frontend A.
 "use client";
 
-import { Eye, Network, Trophy, PanelLeftClose, PanelLeftOpen, ShieldHalf } from "lucide-react";
+import { BookOpen, Eye, Network, Trophy, PanelLeftClose, PanelLeftOpen, ShieldHalf } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Analyze", icon: Eye, description: "Ingest a report and watch the pipeline run" },
   { href: "/graph", label: "Memory Graph", icon: Network, description: "Cross-report IOC & actor memory (Frontend B)" },
   { href: "/eval", label: "Scoreboard", icon: Trophy, description: "TRINETRA vs plain-LLM accuracy (Frontend B)" },
+  { href: "/how-it-works", label: "How it works", icon: BookOpen, description: "Methodology, rules and their sources" },
 ] as const;
 
 export function Sidebar() {

@@ -27,6 +27,17 @@ export type IOC = {
   confidence: Confidence;
   linked_techniques: string[];
   filtered_reason: string | null;
+  source_key?: string | null; // key into GET /api/sources
+  from_ocr?: boolean; // every evidence span is text read from an image
+};
+
+export type ImageInfo = {
+  index: number;
+  source: string; // image URL, or "PDF page N"
+  chars: number;
+  used: boolean;
+  start: number | null;
+  end: number | null;
 };
 
 export type Behaviour = { id: string; summary: string; evidence: Evidence };
@@ -35,7 +46,7 @@ export type Candidate = {
   technique_id: string;
   name: string;
   score: number;
-  source: "vector" | "explicit_id";
+  source: "vector" | "explicit_id" | "keyword_hint";
 };
 
 export type RejectReason = "id_not_in_v20" | "quote_not_in_source" | "verifier_mismatch"
@@ -49,6 +60,7 @@ export type TechniqueMatch = {
   evidence: Evidence | null;
   status: "accepted" | "rejected";
   reject_reason: RejectReason | null;
+  source_key?: string | null;
   rationale: string;
   confidence: Confidence;
   linked_iocs: string[];
@@ -118,7 +130,7 @@ export type ReportRef = {
 };
 
 export type MemoryAlert = {
-  type: "seen_before" | "contradiction";
+  type: "seen_before" | "contradiction" | "duplicate_report";
   entity_type: string;
   entity_key: string;
   entity_display: string;
@@ -132,6 +144,7 @@ export type Migration = {
   new_ids: string[];
   reason: string;
   evidence: Evidence | null;
+  source_key?: string | null;
 };
 
 export type ReportAnalysis = {
@@ -152,6 +165,10 @@ export type ReportAnalysis = {
   detections: Detection[];
   memory_alerts: MemoryAlert[];
   migrations: Migration[];
+  images?: ImageInfo[];
+  ocr_status?: string | null;
+  vulnerabilities?: VulnInfo[];
+  briefing?: Briefing | null;
   timings_ms: Record<string, number>;
 };
 
@@ -232,6 +249,12 @@ type EvalCounts = { tp: string[]; fp: string[]; fn: string[] };
 export type EvalResponse = {
   ran_at: string;
   reports: number;
+  leakage_rule?: string;
+  models?: { extract: string; verify: string };
+  providers?: { extract: string; verify: string };
+  skipped?: { report_id: string; title: string; url: string | null; reason: string }[];
+  baseline_method?: string;
+  trinetra_method?: string;
   systems: {
     system: "baseline" | "trinetra";
     precision: number;
@@ -243,10 +266,70 @@ export type EvalResponse = {
   per_report: {
     report_id: string;
     title: string;
-    url: string;
+    url: string | null;
+    answer_key?: string;
+    truth_count?: number;
+    dropped?: string[];
+    remapped?: string[];
+    input_chars?: number;
     baseline: EvalCounts;
     trinetra: EvalCounts;
   }[];
+};
+
+export type VulnReference = { url: string; tags: string[] };
+
+// NVD + CISA KEV facts for one CVE. A failed lookup says so in *_status; fields stay empty.
+export type VulnInfo = {
+  cve_id: string;
+  ioc_id: string | null;
+  nvd_status: "ok" | "not_found" | "unavailable";
+  nvd_retrieved_at: string | null;
+  nvd_url: string | null;
+  cvss_score: number | null;
+  cvss_severity: string | null;
+  cvss_version: string | null;
+  cvss_source: string | null;
+  description: string | null;
+  affected: string[];
+  references: VulnReference[];
+  kev_status: "ok" | "unavailable";
+  kev_retrieved_at: string | null;
+  kev_catalog_version: string | null;
+  in_kev: boolean | null;
+  kev_name: string | null;
+  kev_date_added: string | null;
+  kev_required_action: string | null;
+  kev_due_date: string | null;
+  kev_ransomware_use: string | null;
+};
+
+export type BriefingStep = { title: string; text: string; technique_ids: string[]; tactic: string };
+export type BriefingAction = {
+  text: string;
+  priority: "urgent" | "high" | "normal";
+  kind: "patch" | "block" | "logging" | "hunt";
+  technique_ids: string[];
+  cve_ids: string[];
+  source_key: string | null;
+};
+export type Briefing = { steps: BriefingStep[]; actions: BriefingAction[] };
+
+export type GlossaryEntry = { term: string; text: string; source_key: string };
+
+export type GeoResponse = { available: boolean; points: GeoPoint[] };
+
+export type Source = { title: string; url: string; publisher: string; why: string };
+export type SourceRule = {
+  kind: "ioc_filter" | "technique_reject";
+  label: string;
+  rule: string;
+  source_keys: string[];
+};
+export type SourcesResponse = {
+  sources: Record<string, Source>;
+  rules: Record<string, SourceRule>;
+  glossary: Record<string, GlossaryEntry>;
 };
 
 export type GeoPoint = {
@@ -260,7 +343,8 @@ export type GeoPoint = {
 };
 
 export type StageName = "ingest" | "guard" | "ioc" | "ioc_role" | "behaviours" | "retrieve"
-  | "verify" | "link" | "migrate" | "tie" | "flow" | "detect" | "memory" | "export" | "pipeline";
+  | "verify" | "link" | "migrate" | "tie" | "flow" | "detect" | "memory" | "vulns" | "brief" | "export"
+  | "pipeline";
 export type StageStatus = "idle" | "started" | "progress" | "done" | "error" | "skipped";
 export type PipelineEvent = {
   analysis_id: string;

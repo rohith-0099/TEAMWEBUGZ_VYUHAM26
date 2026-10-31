@@ -1,5 +1,8 @@
 "use client";
 
+import { GlossaryHint } from "@/components/ui/glossary-hint";
+import { SourceLink } from "@/components/ui/source-link";
+import { useSources } from "@/lib/sources";
 import { useMemo, useState } from "react";
 import {
   Binary,
@@ -77,6 +80,7 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
 
   const activeIocs = useMemo(() => iocs.filter((i) => !i.filtered_reason), [iocs]);
   const filteredNoise = useMemo(() => iocs.filter((i) => Boolean(i.filtered_reason)), [iocs]);
+  const { rule } = useSources();
 
   const uniqueRoles = useMemo(() => {
     return Array.from(new Set(activeIocs.map((i) => i.role)));
@@ -114,7 +118,8 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
           <div className="flex items-center gap-2">
             <Shield className="size-4 text-primary" />
             <h2 className="font-heading text-sm font-semibold tracking-tight">
-              Extracted Indicators of Compromise
+              Extracted Indicators of Compromise <GlossaryHint term="ioc" /> <GlossaryHint term="c2" />{" "}
+              <GlossaryHint term="defanged" />
             </h2>
             <Badge variant="outline" className="font-mono text-xs">
               {activeIocs.length} verified
@@ -199,6 +204,14 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
                           >
                             {safeDisplay(ioc)}
                           </TooltipTrigger>
+                          {ioc.from_ocr && (
+                            <span
+                              className="ml-2 rounded border border-warning/50 bg-warning/10 px-1.5 py-0.5 font-sans text-[10px] font-medium text-warning"
+                              title="Read from an image by OCR, which can misread characters. Check it against the image."
+                            >
+                              From image (OCR) — verify
+                            </span>
+                          )}
                           <TooltipContent className="max-w-xs text-xs">
                             <p className="font-semibold text-primary">Evidence quote:</p>
                             <p className="italic">
@@ -290,7 +303,7 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
                 Filtered Out Noise & Benign Lookalikes ({filteredNoise.length})
               </span>
               <span className="font-mono text-[10px]">
-                Deterministic filter rule verification
+                Each rule links its source
               </span>
             </button>
 
@@ -298,13 +311,16 @@ export function IocTable({ iocs: propIocs }: IocTableProps) {
               <div className="border-t px-3 py-2">
                 <ul className="space-y-1.5 text-xs">
                   {filteredNoise.map((fn) => (
-                    <li key={fn.id} className="flex items-center justify-between text-[11px]">
-                      <span className="font-mono text-muted-foreground line-through">
-                        {safeDisplay(fn)}
-                      </span>
-                      <span className="rounded bg-destructive/10 px-1.5 py-0.5 font-mono text-[10px] text-destructive">
-                        dropped: {fn.filtered_reason}
-                      </span>
+                    <li key={fn.id} className="flex flex-col gap-0.5 text-[11px]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-muted-foreground line-through">
+                          {safeDisplay(fn)}
+                        </span>
+                        <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">
+                          {rule(fn.filtered_reason)?.label ?? fn.filtered_reason}
+                        </span>
+                      </div>
+                      <SourceLink sourceKey={fn.source_key} reason={fn.filtered_reason} />
                     </li>
                   ))}
                 </ul>

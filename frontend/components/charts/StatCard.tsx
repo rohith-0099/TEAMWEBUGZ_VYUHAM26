@@ -11,6 +11,7 @@ const TONES: Record<Tone, string> = {
 
 export function StatCard({
   label,
+  term,
   value,
   unit,
   hint,
@@ -19,6 +20,8 @@ export function StatCard({
   className,
 }: {
   label: string;
+  /** Optional slot after the label, e.g. a glossary "?" button. */
+  term?: React.ReactNode;
   value: React.ReactNode;
   unit?: string;
   hint?: string;
@@ -31,6 +34,7 @@ export function StatCard({
       <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {Icon && <Icon className={cn("size-3.5", tone === "danger" && "text-danger")} aria-hidden="true" />}
         {label}
+        {term}
       </span>
       <span className={cn("font-mono text-4xl font-medium leading-none tabular", TONES[tone])}>
         {value}

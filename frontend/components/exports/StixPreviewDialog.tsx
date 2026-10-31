@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_URL, exportUrl } from "@/lib/api";
-import { useAnalysisStore } from "@/lib/store";
 
 interface StixPreviewDialogProps {
   open: boolean;
@@ -22,59 +21,33 @@ interface StixPreviewDialogProps {
 }
 
 export function StixPreviewDialog({ open, onOpenChange, reportId }: StixPreviewDialogProps) {
-  const analysis = useAnalysisStore((state) => state.analysis);
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!open || !reportId) return;
 
     setLoading(true);
+    setContent("");
+    setError(null);
     fetch(`${API_URL}/api/analyses/${reportId}/export/stix`)
       .then(async (res) => {
-        if (!res.ok) throw new Error("Backend export not available, building local preview");
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.detail ? String(body.detail) : `HTTP ${res.status}`);
+        }
         return res.json();
       })
       .then((data) => {
         setContent(JSON.stringify(data, null, 2));
       })
-      .catch(() => {
-        // Fallback STIX 2.1 bundle representation for mock/offline presentation
-        const mockBundle = {
-          type: "bundle",
-          id: `bundle--${crypto.randomUUID()}`,
-          objects: [
-            {
-              type: "report",
-              id: `report--${crypto.randomUUID()}`,
-              name: analysis.title || "Threat Intelligence Report",
-              published: analysis.published_at || new Date().toISOString(),
-              object_refs: (analysis.techniques || []).map((t) => `attack-pattern--${t.technique_id}`),
-            },
-            ...(analysis.iocs || []).map((ioc) => ({
-              type: "indicator",
-              id: `indicator--${crypto.randomUUID()}`,
-              name: ioc.display,
-              pattern: `[${ioc.type}:value = '${ioc.display}']`,
-              pattern_type: "stix",
-            })),
-            ...(analysis.techniques || [])
-              .filter((t) => t.status === "accepted")
-              .map((t) => ({
-                type: "attack-pattern",
-                id: `attack-pattern--${crypto.randomUUID()}`,
-                name: t.name,
-                external_references: [
-                  { source_name: "mitre-attack", external_id: t.technique_id },
-                ],
-              })),
-          ],
-        };
-        setContent(JSON.stringify(mockBundle, null, 2));
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : String(e));
       })
       .finally(() => setLoading(false));
-  }, [open, reportId, analysis]);
+  }, [open, reportId]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
@@ -102,14 +75,16 @@ export function StixPreviewDialog({ open, onOpenChange, reportId }: StixPreviewD
                 {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
                 <span>{copied ? "Copied" : "Copy"}</span>
               </Button>
-              <a
-                href={exportUrl(reportId, "stix")}
-                download={`trinetra-${reportId}-stix.json`}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                <Download className="size-3.5" />
-                <span>Download</span>
-              </a>
+              {!error && (
+                <a
+                  href={exportUrl(reportId, "stix")}
+                  download={`trinetra-${reportId}-stix.json`}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  <Download className="size-3.5" />
+                  <span>Download</span>
+                </a>
+              )}
             </div>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
@@ -124,6 +99,8 @@ export function StixPreviewDialog({ open, onOpenChange, reportId }: StixPreviewD
                 <Loader2 className="size-4 animate-spin text-primary" />
                 <span>Generating STIX 2.1 bundle...</span>
               </div>
+            ) : error ? (
+              <p role="alert" className="text-sm text-destructive">Export failed: {error}</p>
             ) : (
               <pre className="text-[11px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {content}

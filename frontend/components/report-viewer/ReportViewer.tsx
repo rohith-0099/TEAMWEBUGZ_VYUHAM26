@@ -40,6 +40,29 @@ export function ReportViewer() {
   const techniques = analysis.techniques || [];
   const iocs = analysis.iocs || [];
   const injectionFlags = analysis.injection_flags || [];
+  const behaviourSummary = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const b of analysis.behaviours || []) map[b.id] = b.summary;
+    return map;
+  }, [analysis.behaviours]);
+
+  // "This sentence shows the attacker <action> (stage: <tactic>, code <id>)". The action is the
+  // behaviour agent's summary of this very quote; the technique name is the fallback.
+  const ocrSpans = useMemo(
+    () => (analysis.images || []).filter((i) => i.used && i.start !== null && i.end !== null) as
+      { start: number; end: number }[],
+    [analysis.images],
+  );
+  const fromImage = (start: number) => ocrSpans.some((s) => start >= s.start && start < s.end);
+
+  const explain = (t: TechniqueMatch): string => {
+    const summary = (t.behaviour_id && behaviourSummary[t.behaviour_id]) || "";
+    const action = summary
+      ? summary.charAt(0).toLowerCase() + summary.slice(1).replace(/\.$/, "")
+      : `used ${t.name}`;
+    return `This sentence shows the attacker ${action.replace(/^the attacker /i, "")} ` +
+      `(stage: ${getName(t.tactics[0] ?? "")}, code ${t.technique_id})`;
+  };
 
   const selectedTechnique = useMemo(() => {
     return techniques.find((t) => t.technique_id === selectedTechniqueId) || techniques[0];
@@ -207,9 +230,9 @@ export function ReportViewer() {
                 }
                 title={
                   seg.meta.technique
-                    ? `${seg.meta.technique.technique_id}: ${seg.meta.technique.name}`
+                    ? (fromImage(seg.start) ? "Text read from image (OCR). " : "") + explain(seg.meta.technique)
                     : seg.meta.isIoc
-                    ? `Indicator in role: ${seg.meta.iocRole}`
+                    ? (fromImage(seg.start) ? "Text read from image (OCR). " : "") + `Indicator in role: ${seg.meta.iocRole}`
                     : seg.meta.isInjection
                     ? "Adversarial prompt-injection string"
                     : undefined

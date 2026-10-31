@@ -173,10 +173,37 @@ def _score_lexical(q_text: str, tid: str, t_data: dict[str, Any]) -> float:
     return combined / 100.0
 
 
-def retrieve_candidates(behaviours: list[Behaviour], k: int = 8) -> dict[str, list[Candidate]]:
-    """behaviour.id -> top-k candidates, best first."""
+# Exploiting a CVE/vulnerability, or an exploit request against a web server, php-cgi or an
+# internet-facing system, is the ATT&CK T1190 pattern. Retrieval sometimes ranks T1210 instead, so T1190
+# is added as a hint; the verifier still decides against the official descriptions.
+_PUBLIC_FACING_EXPLOIT = re.compile(
+    r"(exploit\w*|weaponi[sz]\w*)[^.]{0,120}(CVE-\d{4}-\d+|vulnerab\w*|flaw|web ?server|web application|"
+    r"php-cgi|public-facing|internet-facing|exposed)"
+    r"|(CVE-\d{4}-\d+|vulnerab\w*|flaw|php-cgi)[^.]{0,120}exploit\w*"
+    r"|exploit request", re.IGNORECASE)
+T1190 = "T1190"
+HINT_SCORE = 0.6  # a project rule, not a retrieval score: modest, and the verifier still decides
+
+
+def _add_public_facing_hint(behaviour: Behaviour, candidates: list[Candidate]) -> list[Candidate]:
+    text = f"{behaviour.summary} {behaviour.evidence.quote}"
+    if not _PUBLIC_FACING_EXPLOIT.search(text) or any(c.technique_id == T1190 for c in candidates):
+        return candidates
+    row = get_technique(T1190)
+    if row is None:
+        return candidates
+    return [Candidate(technique_id=T1190, name=row["name"], score=HINT_SCORE, source="keyword_hint"), *candidates]
+
+
+def retrieve_candidates(behaviours: list[Behaviour], k: int = 6) -> dict[str, list[Candidate]]:
+    """behaviour.id -> top-k candidates, best first (plus the T1190 hint where it applies)."""
     if not behaviours:
         return {}
+    return {bid: _add_public_facing_hint(next(b for b in behaviours if b.id == bid), cands)
+            for bid, cands in _retrieve(behaviours, k).items()}
+
+
+def _retrieve(behaviours: list[Behaviour], k: int) -> dict[str, list[Candidate]]:
 
     _init_index()
 
