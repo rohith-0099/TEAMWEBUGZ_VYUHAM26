@@ -206,19 +206,29 @@ curl http://localhost:8000/api/analyses/<id>/export/stix -o report.stix.json
 
 ## 📊 Evaluation
 
-**Status: not yet run.** No numbers are shown until `run_eval.py` has really run. The `/eval` page and this table are filled only from that run.
+Run on 31 Oct 2026 (02:14 UTC) over **5 reports**, none skipped. Numbers copied from `/api/eval`, rounded to 3 decimals.
 
-| System | Precision | Recall | F1 | Parent F1 |
-|---|:---:|:---:|:---:|:---:|
-| Plain LLM baseline | not run | not run | not run | not run |
-| **TRINETRA** | not run | not run | not run | not run |
+| System | Precision | Recall | F1 | Parent F1 | Avg. time / report |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Plain LLM baseline | 0.418 | 0.283 | 0.337 | 0.505 | 3.9 s |
+| **TRINETRA** | **0.500** | 0.241 | 0.326 | 0.472 | 210.7 s |
+
+| Report | Answer-key techniques | Baseline TP / FP / FN | TRINETRA TP / FP / FN |
+|---|:---:|:---:|:---:|
+| CVE-2024-4577 PHP-CGI test report | 35 | 18 / 7 / 17 | 15 / 6 / 20 |
+| AA26-281A PRC-linked actors | 15 | 2 / 17 / 13 | 5 / 7 / 10 |
+| AA26-204A Russian Zimbra phishing | 36 | 5 / 15 / 31 | 5 / 8 / 31 |
+| AA26-222A Gunra ransomware | 36 | 8 / 9 / 28 | 5 / 5 / 31 |
+| AA26-293A SafePay ransomware | 23 | 8 / 9 / 15 | 5 / 9 / 18 |
+
+**What this shows:** TRINETRA claims fewer techniques and more of them are right (precision 0.500 vs 0.418), and every one it claims comes with a quote from the report. It also misses more (recall 0.241 vs 0.283), so its F1 is slightly below the plain LLM's. It is much slower because every behaviour goes through retrieval and a verifier call.
 
 **How it is measured**
 - **Answer keys:** the ATT&CK technique tables published in four CISA joint advisories (AA26-293A SafePay, AA26-281A PRC-linked actors, AA26-222A Gunra, AA26-204A Russian Zimbra phishing) and the appendix of our CVE-2024-4577 test report. IDs are copied, mapped to v20, and never edited. Files: [`backend/app/eval/ground_truth/`](backend/app/eval/ground_truth/).
 - **No peeking:** ATT&CK tables, appendices and reference sections are cut from each report, and every remaining technique or tactic ID is deleted, before either system sees it.
 - **Baseline:** one LLM call asked to list the techniques, with no retrieval and no checks. **TRINETRA:** the full pipeline, observed techniques only.
 - **Models:** both slots run on Gemini `gemini/gemini-3.1-flash-lite` (extract: behaviours, Sigma rules, baseline; verify: verifier, IOC roles, guard, briefing). The saved result records both.
-- **Why it hasn't run yet:** the first attempt (31 Oct) used up Groq's daily limit for the verify slot (200,000 tokens/day on the free on-demand tier) partway through the first report. The eval refuses to score a report whose pipeline had any failed LLM call, so nothing was saved. A report that still can't fit the quotas on the next run is skipped and listed on `/eval` with the reason, never scored partially.
+- **Partial runs are never scored:** a report whose pipeline had any failed LLM call is skipped and listed on `/eval` with the reason. In this run none were skipped.
 
 ```bash
 docker compose exec backend python scripts/run_eval.py --dry-run   # ingest + leakage check, no LLM
@@ -231,7 +241,7 @@ docker compose exec backend python scripts/run_eval.py
 
 - **Speed and volume depend on your LLM key.** Both slots run on Gemini (`gemini/gemini-3.1-flash-lite`). We first ran the verify slot on Groq's free on-demand tier (8,000 tokens/minute, 200,000 tokens/day); one report then took about 13 minutes (793 s) and the first eval attempt exhausted Groq's daily quota, so the verify slot moved to Gemini. Groq remains an optional setting.
 - **No silent fallback between providers.** If one is down or out of quota, its calls fail with the reason in the stage event; the other provider is never used in its place.
-- **Accuracy is not yet measured** (see Evaluation).
+- **Recall is low.** On the 5-report eval TRINETRA found 24% of the answer-key techniques (the plain LLM 28%), with higher precision (50% vs 42%) and a slightly lower F1. It misses techniques that a report only implies, and preparation techniques (reconnaissance, infrastructure) that advisories list but barely describe.
 - **AI steps can miss techniques** that a report describes only vaguely. Made-up IDs and quotes are blocked; missed techniques are not.
 - **Indicator roles are AI judgements** backed by a quote, not lookups in threat-intel feeds.
 - **Suggested techniques** come from co-occurrence in ATT&CK data, not from MITRE CTID's Technique Inference Engine, and are hypotheses for hunting.
@@ -251,7 +261,7 @@ docker compose exec backend python scripts/run_eval.py
 - [x] Detection readiness with pySigma-validated Sigma rules
 - [x] Memory across reports with conflicting-claim alerts
 - [x] STIX 2.1, Navigator, Attack Flow and Sigma exports
-- [ ] Accuracy scoreboard run (code ready; needs a higher-limit LLM key)
+- [x] Accuracy scoreboard run (5 reports, 31 Oct 2026)
 - [ ] Hosted deployment
 - [ ] Autonomous watch of CISA, CERT-In and vendor blogs
 - [ ] Investigation copilot with cited answers
