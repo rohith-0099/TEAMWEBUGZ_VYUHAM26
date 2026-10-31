@@ -26,7 +26,7 @@ const POISONED_SAMPLE_TEXT =
 
 const SAMPLE_CHIPS = [
   { label: "CISA AA24-241A", url: "https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-241a" },
-  { label: "DFIR Report: Latrodectus flow", url: "https://thedfirreport.example/2026/latrodectus-flow" },
+  { label: "Imperva: TellYouThePass", url: "https://www.imperva.com/blog/update-cve-2024-4577-quickly-weaponized-to-distribute-tellyouthepass-ransomware/" },
   { label: "Poisoned report demo", text: POISONED_SAMPLE_TEXT },
 ] as const;
 

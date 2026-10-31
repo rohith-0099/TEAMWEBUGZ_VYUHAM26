@@ -46,7 +46,7 @@ export type Candidate = {
   technique_id: string;
   name: string;
   score: number;
-  source: "vector" | "explicit_id";
+  source: "vector" | "explicit_id" | "keyword_hint";
 };
 
 export type RejectReason = "id_not_in_v20" | "quote_not_in_source" | "verifier_mismatch"

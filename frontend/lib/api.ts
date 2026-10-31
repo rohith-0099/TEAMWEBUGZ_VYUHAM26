@@ -1,5 +1,5 @@
 // Typed client, one function per endpoint in contracts §8. Owner: Frontend A.
-// Mock mode is the default; set NEXT_PUBLIC_USE_MOCKS=false to talk to the backend.
+// Talks to the backend. Mock data is served only when NEXT_PUBLIC_USE_MOCKS=true.
 import analysisMock from "@/lib/mock/analysis.json";
 import evalMock from "@/lib/mock/eval.json";
 import geoMock from "@/lib/mock/geo.json";
@@ -14,7 +14,7 @@ import type {
 } from "@/lib/types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== "false";
+export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {

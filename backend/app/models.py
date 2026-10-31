@@ -42,8 +42,8 @@ class Behaviour(BaseModel):
 class Candidate(BaseModel):    # retriever output (internal + shown as "rejected candidates")
     technique_id: str
     name: str
-    score: float               # cosine similarity 0..1
-    source: Literal["vector","explicit_id"] = "vector"
+    score: float               # cosine similarity 0..1 (a fixed value for explicit_id and keyword_hint)
+    source: Literal["vector","explicit_id","keyword_hint"] = "vector"
 
 class TechniqueMatch(BaseModel):
     technique_id: str          # e.g. "T1071.001" — must exist in v20 if status=="accepted"

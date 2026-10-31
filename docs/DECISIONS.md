@@ -608,7 +608,7 @@ Sources that could not be opened are marked **UNVERIFIED** and are never shown i
   - Verifier prompt: "Exploiting a vulnerability in an internet-facing server or web application to gain
     initial access is T1190 (Exploit Public-Facing Application). T1210 (Exploitation of Remote Services)
     is exploiting a service on an internal system to move laterally after access."
-  - Retriever: when a behaviour mentions exploiting a CVE or vulnerability, or an exploit request,
+  - Retriever (project rule, not a standard; see "T1190 keyword hint" below): when a behaviour mentions exploiting a CVE or vulnerability, or an exploit request,
     against a web server, web application, php-cgi or a public-facing/internet-facing system, T1190 is
     added as a candidate hint. The verifier still decides. Checked: the hint fires on "A second actor sent
     exploit requests to /hello.world…" and "The attackers exploited the PHP-CGI flaw…", and not on
@@ -627,3 +627,15 @@ Sources that could not be opened are marked **UNVERIFIED** and are never shown i
 - **Why they support the fix:** MITRE's own definitions separate the two by where and when: an
   Internet-facing system for initial access (T1190) versus internal systems after access (T1210). The
   prompt line restates exactly that distinction.
+
+## T1190 keyword hint is a project rule, not a standard
+
+- **Rule:** the T1190 hint in `retrieve.py` is our own regex, not part of ATT&CK or any standard. It only
+  adds T1190 to the candidates sent to the verifier, and the verifier still decides.
+- **Labels:** the candidate has `source="keyword_hint"`, because the report did not name the ID, and a fixed
+  `score=0.6`, because it was not ranked by retrieval (`HINT_SCORE`). Accepted and rejected results for it
+  show "(candidate added by keyword hint)" in the rationale.
+- **Candidate cap:** the verifier ranks hints first when it applies `MAX_CANDIDATES_SENT`. Without this, a
+  score of 0.6 could drop T1190 from the prompt and bring the original T1210 mistake back.
+- **Effect on evaluation:** the hint can change T1190 results, so scores depend on this rule.
+- **Files changed:** `backend/app/pipeline/retrieve.py`, `backend/app/pipeline/verify.py`, `backend/app/models.py`.

@@ -39,6 +39,7 @@ LISTING_REASON = ("The evidence only names the technique (a table, appendix or l
 MAX_REJECTED_PER_BEHAVIOUR = 3
 OUTSIDE_CANDIDATES_FACTOR = 0.8
 FUZZY_QUOTE_FACTOR = 0.9
+HINT_LABEL = "(candidate added by keyword hint)"
 
 SYSTEM_PROMPT = f"""You verify mappings between threat-report evidence and MITRE ATT&CK v20 techniques.
 You receive several numbered adversary behaviours. Each has its exact evidence from the report, surrounding context,
@@ -176,7 +177,9 @@ class _Job:
     def __init__(self, behaviour: Behaviour, behaviour_id: str | None, candidates: list[Candidate]):
         self.behaviour = behaviour
         self.behaviour_id = behaviour_id
-        self.ordered = sorted(candidates, key=lambda c: c.score, reverse=True)[:MAX_CANDIDATES_SENT]
+        # Hints rank first so their modest score can't drop them from the cap on candidates sent.
+        self.ordered = sorted(candidates, key=lambda c: (c.source == "keyword_hint", c.score),
+                              reverse=True)[:MAX_CANDIDATES_SENT]
         self.blocks = [b for b in map(_candidate_block, self.ordered) if b]
 
 
@@ -196,8 +199,15 @@ def _behaviour_section(text: str, job: _Job, iocs: list[IOC]) -> str:
 
 
 async def _apply(text: str, job: _Job, out: _Item, iocs: list[IOC], ctx: _Context,
-                 emit: Callable[[TechniqueMatch], Awaitable[None]]) -> None:
+                 on_result: Callable[[TechniqueMatch], Awaitable[None]]) -> None:
     behaviour, behaviour_id, ordered = job.behaviour, job.behaviour_id, job.ordered
+    hinted = {c.technique_id for c in ordered if c.source == "keyword_hint"}
+
+    async def emit(t: TechniqueMatch) -> None:
+        if t.technique_id in hinted:
+            t.rationale = f"{HINT_LABEL} {t.rationale}".strip()
+        await on_result(t)
+
     candidate_ids = {c.technique_id for c in ordered}
     ioc_ids = {i.id for i in iocs}
     judged = [_judge(m, text, behaviour, behaviour_id, candidate_ids, ioc_ids, ctx) for m in out.matches]

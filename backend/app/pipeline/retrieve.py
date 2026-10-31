@@ -182,6 +182,7 @@ _PUBLIC_FACING_EXPLOIT = re.compile(
     r"|(CVE-\d{4}-\d+|vulnerab\w*|flaw|php-cgi)[^.]{0,120}exploit\w*"
     r"|exploit request", re.IGNORECASE)
 T1190 = "T1190"
+HINT_SCORE = 0.6  # a project rule, not a retrieval score: modest, and the verifier still decides
 
 
 def _add_public_facing_hint(behaviour: Behaviour, candidates: list[Candidate]) -> list[Candidate]:
@@ -191,8 +192,7 @@ def _add_public_facing_hint(behaviour: Behaviour, candidates: list[Candidate]) -
     row = get_technique(T1190)
     if row is None:
         return candidates
-    # Placed first so it survives the verifier's cap on candidates sent.
-    return [Candidate(technique_id=T1190, name=row["name"], score=1.0, source="explicit_id"), *candidates]
+    return [Candidate(technique_id=T1190, name=row["name"], score=HINT_SCORE, source="keyword_hint"), *candidates]
 
 
 def retrieve_candidates(behaviours: list[Behaviour], k: int = 6) -> dict[str, list[Candidate]]:
