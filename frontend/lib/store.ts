@@ -28,6 +28,8 @@ export const INITIAL_STAGES: Record<
   flow: { status: "idle" },
   detect: { status: "idle" },
   memory: { status: "idle" },
+  vulns: { status: "idle" },
+  brief: { status: "idle" },
   export: { status: "idle" },
   pipeline: { status: "idle" },
 };
@@ -93,9 +95,12 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       analysis: finalAnalysis,
       stages: Object.keys(state.stages).reduce((acc, stageKey) => {
         const key = stageKey as StageName;
+        // Only stages that really ran have a timing; anything else (e.g. a stage added after this
+        // analysis was made) is shown as skipped, never as done.
+        const ran = key === "pipeline" || key in (finalAnalysis.timings_ms ?? {}) || state.stages[key].status === "done";
         acc[key] = {
           ...state.stages[key],
-          status: state.stages[key].status === "error" ? "error" : "done",
+          status: state.stages[key].status === "error" ? "error" : ran ? "done" : "skipped",
         };
         return acc;
       }, {} as Record<StageName, { status: StageStatus; startedAt?: number; ms?: number; lastData?: unknown }>),
@@ -134,6 +139,13 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
               if (event.data.source_url) nextAnalysis.source_url = event.data.source_url;
               if (event.data.published_at) nextAnalysis.published_at = event.data.published_at;
               if (event.data.text) nextAnalysis.text = event.data.text;
+              if (Array.isArray(event.data.images)) nextAnalysis.images = event.data.images;
+              if (event.data.ocr_status !== undefined) nextAnalysis.ocr_status = event.data.ocr_status;
+            } else if (event.status === "progress" && event.data.image) {
+              const current = nextAnalysis.images || [];
+              if (!current.some((i) => i.index === event.data.image.index)) {
+                nextAnalysis.images = [...current, event.data.image];
+              }
             }
             break;
 
@@ -223,6 +235,18 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
           case "memory":
             if (event.status === "done" && Array.isArray(event.data.alerts)) {
               nextAnalysis.memory_alerts = event.data.alerts;
+            }
+            break;
+
+          case "vulns":
+            if (event.status === "done" && Array.isArray(event.data.vulnerabilities)) {
+              nextAnalysis.vulnerabilities = event.data.vulnerabilities;
+            }
+            break;
+
+          case "brief":
+            if (event.status === "done") {
+              nextAnalysis.briefing = event.data.briefing ?? null;
             }
             break;
 

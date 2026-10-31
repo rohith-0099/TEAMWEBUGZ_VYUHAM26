@@ -6,7 +6,7 @@ import logging
 from typing import Literal
 from pydantic import BaseModel
 
-from app.llm import complete_json, UNTRUSTED_RULE
+from app.llm import complete_json, RequestTooLarge, UNTRUSTED_RULE
 from app.models import IOC, IOCRole
 from app.utils.quotes import find_quote
 
@@ -50,8 +50,8 @@ async def label_roles(text: str, iocs: list[IOC]) -> list[IOC]:
     if not eligible_iocs:
         return iocs
 
-    # Batch into groups of 40
-    batch_size = 40
+    # Small batches: the request, including max_tokens, must fit the provider's per-minute token limit
+    batch_size = 15
     batches = [eligible_iocs[i:i + batch_size] for i in range(0, len(eligible_iocs), batch_size)]
 
     async def _process_batch(batch: list[IOC]) -> list[_R]:
@@ -76,8 +76,16 @@ async def label_roles(text: str, iocs: list[IOC]) -> list[IOC]:
                 user=user_prompt,
                 schema=_Out,
                 model="verify",
+                max_tokens=2000,
             )
             return res.roles
+        except RequestTooLarge:
+            if len(batch) == 1:
+                logger.warning(f"IOC role request too large for {batch[0].id}")
+                return []
+            half = len(batch) // 2
+            first, second = await asyncio.gather(_process_batch(batch[:half]), _process_batch(batch[half:]))
+            return first + second
         except Exception as exc:
             logger.warning(f"IOC role labeling batch failed: {exc}")
             return []

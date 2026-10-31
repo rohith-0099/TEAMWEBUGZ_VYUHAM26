@@ -2,11 +2,13 @@
 
 import { useMemo } from "react";
 import { StreamChart } from "@/components/charts";
+import { countHallucinations } from "@/lib/hallucinations";
 import { useAnalysisStore } from "@/lib/store";
 
 const CHECKPOINTS = [
-  { label: "ID exists in v20", reasons: ["id_not_in_v20", "deprecated"], color: "#FF3B5C" },
+  { label: "ID exists in v20", reasons: ["id_not_in_v20"], color: "#FF3B5C" },
   { label: "Quote is in the report", reasons: ["quote_not_in_source"], color: "#C92A48" },
+  { label: "Not deprecated", reasons: ["deprecated"], color: "#A3243F" },
   { label: "Verifier agrees", reasons: ["verifier_mismatch"], color: "#8F1F35" },
   { label: "Confident enough", reasons: ["low_confidence"], color: "#5F1524" },
 ];
@@ -16,9 +18,10 @@ export function FilterStream() {
   const techniques = useAnalysisStore((state) => state.analysis.techniques);
   const stages = useAnalysisStore((state) => state.stages);
 
-  const { streamStages, survivors } = useMemo(() => {
+  const { streamStages, survivors, hallucinations } = useMemo(() => {
     const all = techniques ?? [];
     return {
+      hallucinations: countHallucinations(all),
       survivors: all.filter((t) => t.status === "accepted").length,
       streamStages: CHECKPOINTS.map((c) => ({
         label: c.label,
@@ -39,7 +42,9 @@ export function FilterStream() {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="console-title">Hallucination filter</h2>
         <p className="text-xs text-muted-foreground">
-          {total === 0 ? "Waiting for the verifier" : `${survivors} of ${total} proposed techniques passed every check`}
+          {total === 0
+            ? "Waiting for the verifier"
+            : `${survivors} of ${total} proposed techniques passed every check · ${hallucinations} hallucinations blocked`}
         </p>
       </div>
       <StreamChart

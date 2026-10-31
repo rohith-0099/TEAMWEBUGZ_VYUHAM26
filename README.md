@@ -2,21 +2,15 @@
 
 # 🔱 TRINETRA
 
-### The threat intelligence platform that won't hallucinate.
+### Threat reports in. Verified intelligence out.
 
-**Paste any threat report → get verified IOCs, evidence-backed MITRE ATT&CK® v20 techniques, the attack story, and a defence plan — in under a minute.**
+**Give it a threat report (URL, PDF or text). It extracts the indicators, maps attacker behaviour to MITRE ATT&CK® v20 with the exact sentence that proves each mapping, explains the attack in plain English, and tells you what to fix first.**
 
 [![ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v20-red?style=for-the-badge)](https://attack.mitre.org/resources/updates/)
 [![STIX](https://img.shields.io/badge/STIX-2.1-blue?style=for-the-badge)](https://oasis-open.github.io/cti-documentation/)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
-
-[**Live Demo**](#) · [**Demo Video**](#) · [**Docs**](PLAN.md) · [**Report a Bug**](../../issues)
-
-<!-- Replace with a real GIF of the pipeline canvas + attack flow building -->
-<img src="docs/assets/hero.gif" alt="TRINETRA analysing a threat report live" width="90%"/>
 
 *Built by Team **WeBugz** for Vyuham'26 Agent Forge · Problem AF-15 · Cybersecurity & Digital Trust*
 
@@ -26,107 +20,43 @@
 
 ## ⚡ TL;DR
 
-Security teams drown in threat reports. Each one hides IOCs in prose (often defanged like `hxxp://evil[.]com`) and describes attacker behaviour that must be mapped to MITRE ATT&CK by hand — slow, inconsistent and error-prone. Plain LLMs make it worse: they invent technique IDs and confuse similar techniques.
+Threat reports hide indicators in prose (often defanged, like `hxxp://evil[.]com`) and describe attacker behaviour that analysts map to ATT&CK by hand. Plain LLMs make it worse: they invent technique IDs and quote sentences that aren't in the report.
 
-**TRINETRA** turns a report into structured, *verifiable* intelligence:
+TRINETRA's rule is simple: **nothing reaches you unless it is proven.**
 
-- 🎯 **Every technique comes with the exact quote that proves it** — click and it's highlighted in the source.
-- 🛡️ **A verifier rejects hallucinations** — IDs not in ATT&CK v20 or quotes not in the report never reach you.
-- 🧠 **It remembers** — IOCs and actors connect across reports, and conflicting claims are flagged.
-- 🔧 **It ends in action** — attack paths you can break, detection gaps you can close, Sigma rules you can deploy.
+- 🎯 **Every technique comes with the exact sentence from the report that proves it.** Click it and it's highlighted in the source.
+- 🛡️ **Code rejects hallucinations.** A technique ID that isn't in ATT&CK v20, or a quote that isn't in the report, is thrown out and counted as "hallucination blocked".
+- 📚 **Every rule has a public source.** Each filtered indicator and rejected technique links the reference behind the rule (IANA, IETF RFCs, CISA, MITRE…). See [How it works](#-sources--methodology).
+- 🔧 **It ends in action.** A plain-English briefing, CVE facts from NVD and CISA KEV, and a downloadable block list.
 
 ---
 
-## ✨ Features
+## ✨ What it does
 
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 🔍 Defang-aware IOC engine
-Extracts IPs, domains, URLs, hashes, emails, CVEs, file paths and registry keys — including defanged indicators. Filters out private IPs, version numbers and benign domains, then labels each IOC's **role** (C2, payload, phishing, exfil) with evidence.
-
-</td>
-<td width="50%" valign="top">
-
-### 🎯 Evidence-grounded ATT&CK mapping
-Report → atomic behaviours with exact quotes → semantic retrieval over ATT&CK **v20** → LLM verifier against official descriptions → hard code checks. Rejected candidates are shown with reasons. Full transparency.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 🕸️ Live agent pipeline
-Watch every agent run in real time on a visual workflow canvas — deterministic steps and LLM steps clearly badged, each streaming its output.
-
-</td>
-<td valign="top">
-
-### 🧬 Auto attack flow
-Rebuilds the attack as an animated causal chain. **Observed** steps are solid, **predicted** steps (MITRE CTID Technique Inference Engine) are ghost nodes to hunt for, and **unknown** gaps are marked honestly.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 💥 Attack disruption simulator
-Block any step and instantly see what percentage of attack paths break, which survive, and which D3FEND countermeasures apply.
-
-</td>
-<td valign="top">
-
-### 📡 Detection readiness
-Maps each technique to ATT&CK v20 Detection Strategies, Analytics and log sources. Tick the telemetry you have — see your gaps. Generates **pySigma-validated** Sigma rules.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 🧠 Temporal threat memory
-Every report enriches a temporal knowledge graph. Get alerts like *"this C2 IP appeared in 2 earlier reports"* and contradiction cards when sources disagree. Replay with a time slider.
-
-</td>
-<td valign="top">
-
-### 🧱 Prompt-injection firewall
-Threat reports are untrusted input. TRINETRA detects poisoned reports that try to manipulate the AI and maps the attempt to ATT&CK v20 **T1698 / T1699**.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 🔄 v20 taxonomy migrator
-Old reports cite retired IDs (e.g. Defense Evasion, split in v19 into Stealth and Defense Impairment). TRINETRA remaps them to current ATT&CK automatically.
-
-</td>
-<td valign="top">
-
-### 📊 Accuracy scoreboard
-Measured, not claimed: precision / recall / F1 against CISA advisories' published ATT&CK tables, compared with a plain-LLM baseline.
-
-</td>
-</tr>
-</table>
-
-### 📤 Standards-native exports
-`STIX 2.1 bundle` · `ATT&CK Navigator layer` · `Attack Flow JSON` · `Sigma rules (→ KQL / SPL)` · `PDF report`
+| | |
+|---|---|
+| **🔍 Indicator engine** | Extracts IPs, domains, URLs, hashes, emails, CVEs, file paths and registry keys, including defanged ones. Filters noise with sourced rules: private/reserved and documentation IPs (IANA, RFC 1918, RFC 5737), public DNS resolvers, names without a real public suffix (Public Suffix List), URL paths that look like domains (RFC 3986), and harmless hashes such as MD5("123456"). Filtered items stay visible with their reason and source. An AI labels each kept indicator's role (C2, payload…) with a quote. |
+| **🎯 Evidence-grounded ATT&CK v20 mapping** | An AI lists attacker behaviours with exact quotes. Retrieval finds candidate techniques in ATT&CK v20. A verifier compares each quote with the official description. Then code checks: the ID must exist in v20, the quote must be in the report, the quote must describe an action (not a heading, a summary phrase or an ATT&CK table row), and confidence must clear the threshold. Rejected candidates are shown with the reason. |
+| **📝 Plain-English briefing** | The attack in order, step by step, each with "See proof". Then "What to do now" with priorities and a source per action. Written only from verified data: code drops any step or action that names a technique or CVE the analysis didn't prove. |
+| **🧯 CVE facts** | For each CVE: CVSS score and severity, description, affected versions and patch/advisory links from the NVD CVE API 2.0; whether it is in the CISA Known Exploited Vulnerabilities catalog, with its due date and required action. Cached; a failed lookup says "unavailable" and shows nothing rather than guessing. |
+| **🕸️ Live pipeline** | Every stage streams to a canvas as it runs, badged as deterministic, AI, or AI + rules. |
+| **🧬 Attack flow** | Observed techniques as a chain by ATT&CK tactic order; gaps between stages are marked "not established in report". Suggested techniques to hunt for come from a **co-occurrence model over ATT&CK v20 groups, campaigns and software**; they are dashed and labelled as not observed. |
+| **💥 Disruption simulator** | Block a step and see what share of attack paths break, plus the ATT&CK mitigations for that technique. |
+| **📡 Detection readiness** | ATT&CK v20 detection strategies and log sources per technique; tick the telemetry you have to see gaps. Sigma rules are validated with pySigma and converted to Splunk SPL. |
+| **🧠 Memory across reports** | Indicators that appeared in earlier reports are flagged, with conflicting claims. Re-analysing the same document gives one "already analysed" notice instead of an alert per indicator. |
+| **🧱 Prompt-injection firewall** | Reports are untrusted input. Text that tries to instruct the AI is flagged and mapped to ATT&CK v20 T1698 / T1699. |
+| **🔄 v20 migrator** | Revoked or deprecated IDs are remapped to their v20 replacements (for example T1070.001 → T1685.005). |
+| **📤 Exports** | STIX 2.1 bundle · ATT&CK Navigator layer · Attack Flow JSON · Sigma YAML · printable report (browser print view) · block list (TXT). |
 
 ---
 
 ## 🖼️ Screenshots
 
-<!-- Replace with real screenshots before submission -->
-| Pipeline canvas | Evidence view | Attack flow |
-|:---:|:---:|:---:|
-| <img src="docs/assets/pipeline.png" width="280"/> | <img src="docs/assets/evidence.png" width="280"/> | <img src="docs/assets/flow.png" width="280"/> |
+Captured from the production build on local data. The report shown was analysed before the briefing and CVE stages were added, so its briefing card says so.
 
-| Detection readiness | Memory graph | Scoreboard |
+| Home | Report overview | How it works |
 |:---:|:---:|:---:|
-| <img src="docs/assets/detections.png" width="280"/> | <img src="docs/assets/graph.png" width="280"/> | <img src="docs/assets/eval.png" width="280"/> |
+| <img src="docs/assets/home.png" width="280"/> | <img src="docs/assets/report-overview.png" width="280"/> | <img src="docs/assets/how-it-works.png" width="280"/> |
 
 ---
 
@@ -134,72 +64,71 @@ Measured, not claimed: precision / recall / F1 against CISA advisories' publishe
 
 ```mermaid
 flowchart LR
-    A[URL / PDF / Text] --> B[Ingest<br/>Firecrawl]
-    B --> G[Injection<br/>Firewall]
-    G --> C[IOC Engine<br/><i>deterministic</i>]
-    G --> D[Behaviour Agent<br/><i>LLM</i>]
-    C --> C2[IOC Role Agent]
+    A[URL / PDF / Text] --> B[Ingest]
+    B --> G[Injection<br/>firewall]
+    G --> C[IOC engine<br/><i>deterministic</i>]
+    G --> D[Behaviour agent<br/><i>AI</i>]
+    C --> C2[IOC role agent<br/><i>AI</i>]
+    C --> V[CVE lookup<br/>NVD + CISA KEV]
     D --> E[Retriever<br/>ATT&CK v20 vectors]
-    E --> F[Verifier<br/>LLM + code checks]
-    C2 --> L[Linker<br/>IOC ↔ Technique]
+    E --> F[Verifier<br/>AI + code checks]
+    C2 --> L[Linker]
     F --> L
-    L --> H[Attack Flow<br/>+ NetworkX]
-    L --> I[TIE<br/>Predictions]
-    L --> J[Detections<br/>+ Sigma]
-    L --> K[Temporal<br/>Memory]
-    L --> M[v20 Migrator]
-    H & I & J & K & M --> X[Exports<br/>STIX · Navigator · Sigma]
-    H & I & J & K --> UI[Next.js UI<br/>live via SSE]
+    L --> M[v20 migrator]
+    M --> P[Co-occurrence<br/>suggestions]
+    P --> H[Attack flow]
+    M --> J[Detections<br/>+ Sigma]
+    M --> K[Memory]
+    H & J & K & V --> BR[Briefing<br/>AI + code checks]
+    BR --> X[Exports]
 ```
 
+The pipeline runs on LangGraph; every stage publishes Server-Sent Events, so the UI renders stage by stage.
+
 **Design principles**
-1. **No hallucinated output reaches the user.** IDs must exist in ATT&CK v20; quotes must exist in the source.
-2. **Deterministic first.** Code handles what code can; the LLM handles language understanding.
-3. **Verified output is the only writer to memory.** No second LLM re-extracts raw text into the graph.
-4. **Observed ≠ predicted.** Inferences are always visually and structurally separate from facts.
-5. **Untrusted input stays data.** Report content is never treated as instructions.
+1. **No unproven output reaches the user.** IDs must exist in ATT&CK v20; quotes must exist in the report and describe an action.
+2. **Deterministic first.** Code does what code can; the AI handles language.
+3. **Every rule cites a public source**, or says plainly that it is a project rule.
+4. **Observed ≠ suggested.** Suggestions are visually and structurally separate and never enter exports by default.
+5. **Untrusted input stays data.** Report text is never treated as instructions.
 
 ---
 
-## 🧰 Tech Stack
+## 🧰 Tech stack
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js · TypeScript · Tailwind · shadcn/ui · Framer Motion · React Flow · sigma.js / graphology · deck.gl + MapLibre |
-| **Backend** | Python · FastAPI · LangGraph · Pydantic v2 · Server-Sent Events |
-| **AI / ML** | LLM via LiteLLM (provider-agnostic) · fastembed (`bge-small-en-v1.5`) · CTID Technique Inference Engine |
-| **Security data** | MITRE ATT&CK v20 (STIX) · mitreattack-python · D3FEND · Attack Flow 3 · iocsearcher · stix2 · pySigma |
+| **Frontend** | Next.js 15 · TypeScript · Tailwind · shadcn/ui · React Flow · sigma.js / graphology |
+| **Backend** | Python 3.11 · FastAPI · LangGraph · Pydantic v2 · Server-Sent Events |
+| **AI** | Any LLM via LiteLLM · fastembed (`BAAI/bge-small-en-v1.5`) for retrieval |
+| **Security data** | MITRE ATT&CK v20 (STIX) · NVD CVE API 2.0 · CISA KEV · iocsearcher · tldextract (Public Suffix List) · stix2 · pySigma |
 | **Data** | PostgreSQL + pgvector · NetworkX |
-| **Integrations** | Firecrawl · n8n (alerts, MISP / OpenCTI push) |
-| **Deploy** | Docker Compose · Vercel · Railway / Render |
+| **Integrations** | Firecrawl (URL/PDF ingestion) · n8n webhook (optional alerts) |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick start
 
-### Prerequisites
-- Docker & Docker Compose
-- An LLM API key (any LiteLLM-supported provider)
-- A Firecrawl API key (optional — falls back to local parsing)
+**Prerequisites:** Docker with Compose, Node.js 20+, and an API key for any LLM provider LiteLLM supports.
 
-### 1. Clone and configure
 ```bash
-git clone https://github.com/webugz/trinetra.git
-cd trinetra
-cp .env.example .env   # add your keys
-```
+git clone <this repo> && cd WEBUGZ_VYUHAM26
+cp .env.example .env              # fill in LLM_API_KEY, LLM_EXTRACT_MODEL, LLM_VERIFY_MODEL
 
-### 2. Launch
-```bash
-docker compose up --build
-```
+# backend + Postgres (pgvector)
+docker compose up -d --build
 
-### 3. Load ATT&CK v20 and build embeddings (first run only)
-```bash
+# first run only: load ATT&CK v20 and build embeddings
 docker compose exec backend python scripts/load_attack.py
+
+# frontend (not in docker compose)
+cd frontend
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_USE_MOCKS=false" > .env.local
+npm install
+npm run dev
 ```
 
-### 4. Open
 - **App:** http://localhost:3000
 - **API docs:** http://localhost:8000/docs
 
@@ -208,30 +137,34 @@ docker compose exec backend python scripts/load_attack.py
 
 | Variable | Description |
 |---|---|
-| `LLM_API_KEY` | Key for your LLM provider |
-| `LLM_EXTRACT_MODEL` | Stronger model for behaviour extraction |
-| `LLM_VERIFY_MODEL` | Faster model for verification |
-| `FIRECRAWL_API_KEY` | Firecrawl key for URL/PDF ingestion |
-| `DATABASE_URL` | Postgres connection string |
+| `GEMINI_API_KEY` / `GROQ_API_KEY` | Keys for models named `gemini/...` and `groq/...` |
+| `LLM_API_KEY` | Key for any other provider (no key at all = offline mock mode) |
+| `LLM_EXTRACT_MODEL` / `LLM_VERIFY_MODEL` | LiteLLM model names; both default to `gemini/gemini-3.1-flash-lite` (a `groq/...` model also works) |
+| `LLM_TPM_GEMINI` / `LLM_TPM_GROQ` | Tokens-per-minute limit per provider; calls wait instead of failing. Empty = none |
+| `LLM_RPM_GEMINI` / `LLM_RPM_GROQ` | Requests-per-minute limit per provider. Empty = none |
+| `LLM_CONCURRENCY` | Parallel LLM calls (default 8) |
+| `LLM_TOKENS_PER_MINUTE` | Tokens-per-minute limit for providers without their own setting. 0 = off |
+| `LLM_CACHE` | `true` caches LLM answers in Postgres; set `false` only to measure real latency |
 | `MAPPING_CONFIDENCE_THRESHOLD` | Minimum verifier confidence (default `0.6`) |
-| `N8N_WEBHOOK_URL` | Optional — outbound alerts |
+| `FIRECRAWL_API_KEY` | Optional; URL/PDF ingestion falls back to local parsing |
+| `NVD_API_KEY` | Optional; raises NVD rate limits |
+| `DATABASE_URL` | Postgres connection string |
+| `GEOIP_DB_PATH` | Optional DB-IP City Lite `.mmdb`; without it the Map tab is hidden |
+| `N8N_WEBHOOK_URL` | Optional outbound alerts |
+| `CORS_ORIGINS` | Frontend origin(s), comma-separated |
 
 </details>
 
 <details>
-<summary><b>🛠️ Local development without Docker</b></summary>
+<summary><b>🛠️ Backend without Docker</b></summary>
 
 ```bash
-# backend
+docker compose up -d db
 cd backend
-python -m venv .venv && source .venv/bin/activate
+python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
-
-# frontend
-cd frontend
-npm install
-npm run dev
+export DATABASE_URL=postgresql://trinetra:trinetra@localhost:5433/trinetra
+uvicorn app.main:app --reload --port 8000 --workers 1   # 1 worker: live events live in memory
 ```
 </details>
 
@@ -239,19 +172,13 @@ npm run dev
 
 ## 📖 Usage
 
-**In the app:** paste a report URL, upload a PDF, or paste text → watch the pipeline run → explore evidence, flow, detections and memory → export.
+**In the app:** paste a URL, upload a PDF or paste text → watch the pipeline → read the briefing → check the evidence → export.
 
-**Via API:**
+**Via the API:**
 ```bash
-# start an analysis
-curl -X POST http://localhost:8000/api/analyses \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://www.cisa.gov/news-events/cybersecurity-advisories/<advisory>"}'
-
-# stream live pipeline events
-curl -N http://localhost:8000/api/analyses/<id>/events
-
-# export STIX 2.1
+curl -X POST http://localhost:8000/api/analyses -H "Content-Type: application/json" \
+  -d '{"url": "https://www.cisa.gov/news-events/cybersecurity-advisories/aa26-293a"}'
+curl -N http://localhost:8000/api/analyses/<id>/events          # live stage events
 curl http://localhost:8000/api/analyses/<id>/export/stix -o report.stix.json
 ```
 
@@ -260,104 +187,107 @@ curl http://localhost:8000/api/analyses/<id>/export/stix -o report.stix.json
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/analyses` | Start analysis (`url`, `text`, or PDF upload) |
-| `GET` | `/api/analyses/{id}` | Full analysis result |
-| `GET` | `/api/analyses/{id}/events` | Live SSE pipeline stream |
+| `POST` | `/api/analyses` | Start an analysis (`url`, `text`, or PDF upload) |
+| `GET` | `/api/analyses` | Recent analyses |
+| `GET` | `/api/analyses/{id}` | Full result |
+| `GET` | `/api/analyses/{id}/events` | Live stage events (SSE) |
 | `POST` | `/api/analyses/{id}/feedback` | Analyst accept / reject |
-| `POST` | `/api/analyses/{id}/simulate` | Attack disruption simulation |
+| `POST` | `/api/analyses/{id}/simulate` | Disruption simulation |
 | `POST` | `/api/analyses/{id}/readiness` | Detection gap analysis |
-| `GET` | `/api/analyses/{id}/export/{fmt}` | `stix` · `navigator` · `sigma` · `flow` · `pdf` |
-| `GET` | `/api/graph?at=<date>` | Temporal memory graph |
-| `GET` | `/api/eval` | Accuracy scoreboard |
+| `GET` | `/api/analyses/{id}/export/{fmt}` | `stix` · `navigator` · `sigma` · `flow` |
+| `GET` | `/api/analyses/{id}/geo` | Map points (`available: false` without a GeoIP database) |
+| `GET` | `/api/graph` | Cross-report memory graph |
+| `GET` | `/api/sources` | Every rule, its source, and the glossary |
+| `GET` | `/api/eval` | Latest accuracy run (404 until one has run) |
 
-Interactive docs at `/docs`.
 </details>
 
 ---
 
 ## 📊 Evaluation
 
-Ground truth: CISA joint advisories that publish their own ATT&CK technique tables.
+**Status: not yet run.** No numbers are shown until `run_eval.py` has really run. The `/eval` page and this table are filled only from that run.
 
-<!-- Fill from `python scripts/run_eval.py` — never hand-edit numbers -->
-| System | Precision | Recall | F1 | Avg. time / report |
+| System | Precision | Recall | F1 | Parent F1 |
 |---|:---:|:---:|:---:|:---:|
-| Plain LLM baseline | — | — | — | — |
-| **TRINETRA** | **—** | **—** | **—** | **—** |
+| Plain LLM baseline | not run | not run | not run | not run |
+| **TRINETRA** | not run | not run | not run | not run |
 
-Reproduce:
+**How it is measured**
+- **Answer keys:** the ATT&CK technique tables published in four CISA joint advisories (AA26-293A SafePay, AA26-281A PRC-linked actors, AA26-222A Gunra, AA26-204A Russian Zimbra phishing) and the appendix of our CVE-2024-4577 test report. IDs are copied, mapped to v20, and never edited. Files: [`backend/app/eval/ground_truth/`](backend/app/eval/ground_truth/).
+- **No peeking:** ATT&CK tables, appendices and reference sections are cut from each report, and every remaining technique or tactic ID is deleted, before either system sees it.
+- **Baseline:** one LLM call asked to list the techniques, with no retrieval and no checks. **TRINETRA:** the full pipeline, observed techniques only.
+- **Models:** both slots run on Gemini `gemini/gemini-3.1-flash-lite` (extract: behaviours, Sigma rules, baseline; verify: verifier, IOC roles, guard, briefing). The saved result records both.
+- **Why it hasn't run yet:** the first attempt (31 Oct) used up Groq's daily limit for the verify slot (200,000 tokens/day on the free on-demand tier) partway through the first report. The eval refuses to score a report whose pipeline had any failed LLM call, so nothing was saved. A report that still can't fit the quotas on the next run is skipped and listed on `/eval` with the reason, never scored partially.
+
 ```bash
+docker compose exec backend python scripts/run_eval.py --dry-run   # ingest + leakage check, no LLM
 docker compose exec backend python scripts/run_eval.py
 ```
 
 ---
 
+## ⚠️ Limitations
+
+- **Speed and volume depend on your LLM key.** Both slots run on Gemini (`gemini/gemini-3.1-flash-lite`). We first ran the verify slot on Groq's free on-demand tier (8,000 tokens/minute, 200,000 tokens/day); one report then took about 13 minutes (793 s) and the first eval attempt exhausted Groq's daily quota, so the verify slot moved to Gemini. Groq remains an optional setting.
+- **No silent fallback between providers.** If one is down or out of quota, its calls fail with the reason in the stage event; the other provider is never used in its place.
+- **Accuracy is not yet measured** (see Evaluation).
+- **AI steps can miss techniques** that a report describes only vaguely. Made-up IDs and quotes are blocked; missed techniques are not.
+- **Indicator roles are AI judgements** backed by a quote, not lookups in threat-intel feeds.
+- **Suggested techniques** come from co-occurrence in ATT&CK data, not from MITRE CTID's Technique Inference Engine, and are hypotheses for hunting.
+- **Some filters are project rules** with no external standard (common legitimate domains, file names, reference links). The app labels them so, and filtered items stay visible.
+- **The Map tab** appears only with an offline GeoIP database installed; IPs it cannot place are not shown.
+- **Not deployed yet**; run it locally as above.
+
+---
+
 ## 🗺️ Roadmap
 
-- [x] Defang-aware IOC extraction with role labelling
-- [x] Evidence-grounded ATT&CK v20 mapping with verifier
-- [x] Live agent pipeline view
-- [x] Attack flow, predictions and disruption simulator
-- [x] Detection readiness + Sigma generation
-- [x] Temporal memory with contradiction alerts
-- [x] STIX 2.1 and Navigator exports
-- [ ] Autonomous intel watch (CISA, CERT-In, vendor blogs)
+- [x] Defang-aware indicator extraction with sourced filters and role labels
+- [x] Evidence-grounded ATT&CK v20 mapping with hard checks
+- [x] Plain-English briefing and CVE facts (NVD, CISA KEV)
+- [x] Live pipeline view
+- [x] Attack flow with co-occurrence suggestions, and disruption simulator
+- [x] Detection readiness with pySigma-validated Sigma rules
+- [x] Memory across reports with conflicting-claim alerts
+- [x] STIX 2.1, Navigator, Attack Flow and Sigma exports
+- [ ] Accuracy scoreboard run (code ready; needs a higher-limit LLM key)
+- [ ] Hosted deployment
+- [ ] Autonomous watch of CISA, CERT-In and vendor blogs
 - [ ] Investigation copilot with cited answers
-- [ ] MCP server for Claude / Cursor
-- [ ] Self-improving classifier from analyst feedback
-- [ ] Multi-tenant SaaS with SSO
-
-<!-- Tick items only when they actually work in the deployed build -->
 
 ---
 
-## 🔐 Security & Responsible Use
+## 📚 Sources & methodology
 
-- IOCs are always displayed **defanged** and never auto-opened.
-- Report content is treated as untrusted data; prompt-injection attempts are detected and flagged.
-- Predicted techniques are hypotheses for hunting, **not** confirmed observations.
-- Infrastructure overlap is never presented as proof of attribution.
-
-Found a vulnerability? Please open a private security advisory rather than a public issue.
+- **In the app:** the **How it works** page lists the pipeline, every rule with its reason and source link, the data sources, and the limitations. Every filtered indicator, rejected technique and migration links its own source.
+- **In the repo:** [`docs/DECISIONS.md`](docs/DECISIONS.md) records each fix: the problem we saw, the change, the files, and the public source that supports it. Links we could not open are marked UNVERIFIED and are never shown in the app.
+- **One registry:** [`backend/app/sources.py`](backend/app/sources.py), served at `/api/sources`.
 
 ---
 
-## 🤝 Contributing
+## 🔐 Security & responsible use
 
-Contributions are welcome! Please read [PLAN.md](PLAN.md) for architecture and data contracts, then:
-
-1. Fork the repo and create a branch: `git checkout -b feat/amazing-feature`
-2. Commit with clear messages
-3. Make sure tests pass: `pytest` and `npm test`
-4. Open a pull request
+- Indicators are always shown defanged and are never links.
+- Report text is untrusted; injection attempts are flagged, and the verifier blocks injected fake IDs and quotes.
+- Suggested techniques are hypotheses, not observations. Shared infrastructure is never presented as proof of attribution.
 
 ---
 
-## 🙏 Acknowledgements
+## 🙏 Credits
 
-TRINETRA stands on the shoulders of the open threat-informed defence community:
+- [MITRE ATT&CK®](https://attack.mitre.org/): technique data (v20), descriptions, detection strategies and mitigations
+- [NIST National Vulnerability Database](https://nvd.nist.gov/): CVE records via the CVE API 2.0
+- [CISA Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+- [CISA, Best Practices for MITRE ATT&CK Mapping](https://www.cisa.gov/sites/default/files/2023-01/Best%20Practices%20for%20MITRE%20ATTCK%20Mapping.pdf): the basis for the evidence rules
+- [MITRE CTID Attack Flow](https://ctid.mitre.org/): export format
+- [OASIS STIX 2.1](https://oasis-open.github.io/cti-documentation/) · [SigmaHQ / pySigma](https://github.com/SigmaHQ) · [Public Suffix List](https://publicsuffix.org/) · [iocsearcher](https://pypi.org/project/iocsearcher/) · [Firecrawl](https://github.com/firecrawl/firecrawl) · [LangGraph](https://github.com/langchain-ai/langgraph)
+- [DB-IP](https://db-ip.com/db/download/ip-to-city-lite) IP to City Lite (CC BY 4.0), only if you install it for the optional map
 
-- [MITRE ATT&CK®](https://attack.mitre.org/) and [D3FEND™](https://d3fend.mitre.org/)
-- [MITRE Center for Threat-Informed Defense](https://ctid.mitre.org/) — TRAM, Technique Inference Engine, Attack Flow
-- [OASIS CTI TC](https://github.com/oasis-open/cti-python-stix2) — STIX 2.1
-- [SigmaHQ](https://github.com/SigmaHQ) — Sigma & pySigma
-- [CTINexus](https://github.com/peng-gao-lab/CTINexus) — CTI knowledge graph research
-- [iocsearcher](https://pypi.org/project/iocsearcher/) · [Firecrawl](https://github.com/firecrawl/firecrawl) · [LangGraph](https://github.com/langchain-ai/langgraph)
-
-*MITRE ATT&CK and ATT&CK are registered trademarks of The MITRE Corporation. TRINETRA is not affiliated with or endorsed by MITRE.*
+*MITRE ATT&CK and ATT&CK are registered trademarks of The MITRE Corporation. TRINETRA is not affiliated with or endorsed by MITRE, NIST or CISA.*
 
 ---
 
 ## 📄 License
 
-Distributed under the Apache License 2.0. See [`LICENSE`](LICENSE) for details.
-
----
-
-<div align="center">
-
-**Built with ☕ and zero sleep by Team WeBugz**
-
-If TRINETRA helped you, consider giving it a ⭐
-
-</div>
+Apache License 2.0. See [`LICENSE`](LICENSE).

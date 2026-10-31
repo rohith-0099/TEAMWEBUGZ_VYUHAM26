@@ -230,6 +230,8 @@ class IOC(BaseModel):
     confidence: Confidence = Field(default_factory=Confidence)
     linked_techniques: list[str] = []   # technique_ids
     filtered_reason: str | None = None  # set => dropped (private IP, allowlisted...)
+    source_key: str | None = None       # app/sources.py key backing filtered_reason
+    from_ocr: bool = False              # every evidence span lies in text read from an image (OCR)
 
 class Behaviour(BaseModel):
     id: str                    # "b-1", ...
@@ -250,6 +252,7 @@ class TechniqueMatch(BaseModel):
     evidence: Evidence | None = None    # REQUIRED when origin=="observed"
     status: Literal["accepted","rejected"]
     reject_reason: str | None = None    # "id_not_in_v20" | "quote_not_in_source" | "verifier_mismatch" | "low_confidence" | "deprecated"
+    source_key: str | None = None       # app/sources.py key backing reject_reason
     rationale: str = ""
     confidence: Confidence = Field(default_factory=Confidence)
     linked_iocs: list[str] = []         # IOC ids
@@ -312,7 +315,7 @@ class ReportRef(BaseModel):
     report_id: str; title: str; published_at: datetime | None = None; quote: str | None = None
 
 class MemoryAlert(BaseModel):
-    type: Literal["seen_before","contradiction"]
+    type: Literal["seen_before","contradiction","duplicate_report"]   # duplicate_report: same normalised text analysed before; sole alert
     entity_type: str           # "ioc" | "actor" | "malware" | "technique"
     entity_key: str            # refanged value or name
     entity_display: str        # defanged for IOCs
@@ -325,6 +328,7 @@ class Migration(BaseModel):
     new_ids: list[str]
     reason: str                # e.g. "TA0005 Defense Evasion split in v19"
     evidence: Evidence | None = None
+    source_key: str | None = "attack_v20"
 
 class ReportAnalysis(BaseModel):
     report_id: str
@@ -344,8 +348,16 @@ class ReportAnalysis(BaseModel):
     detections: list[Detection] = []
     memory_alerts: list[MemoryAlert] = []
     migrations: list[Migration] = []
+    images: list[ImageInfo] = []               # images considered for OCR: index, source, chars, used, start, end
+    ocr_status: str | None = None              # "ok" | "no_images" | "unavailable: <reason>"
+    vulnerabilities: list[VulnInfo] = []       # NVD + CISA KEV facts per CVE IOC (see models.py)
+    briefing: Briefing | None = None           # steps + actions, written from verified data only
     timings_ms: dict[str, int] = {}
 ```
+
+`VulnInfo`, `VulnReference`, `Briefing`, `BriefingStep` and `BriefingAction` are defined in
+`backend/app/models.py` and mirrored in `frontend/lib/types.ts`. A failed NVD/KEV lookup is
+`nvd_status="unavailable"` / `kev_status="unavailable"` with empty fields, never a guess.
 
 ---
 
@@ -477,7 +489,8 @@ Base URL: `http://localhost:8000` (env `NEXT_PUBLIC_API_URL` on the frontend). A
 | POST | `/api/analyses/{id}/simulate` | `{"blocked_node_ids": str[]}` | `SimulateResponse` | P5 |
 | POST | `/api/analyses/{id}/readiness` | `{"telemetry": Telemetry[]}` | `ReadinessResponse` | P5 |
 | GET | `/api/analyses/{id}/export/{fmt}` | fmt ∈ `stix`,`navigator`,`sigma`,`flow` | file download (JSON / YAML) | P3 (stix, navigator) · P5 (sigma, flow) |
-| GET | `/api/analyses/{id}/geo` (NICE) | – | `GeoPoint[]` | P3 |
+| GET | `/api/analyses/{id}/geo` (NICE) | – | `{"available": bool, "points": GeoPoint[]}`; IPs the offline DB cannot place get no point | P3 |
+| GET | `/api/sources` | – | `{"sources": {key: {title,url,publisher,why}}, "rules": {reason: {kind,label,rule,source_keys}}, "glossary": {term: {term,text,source_key}}}` | P5 |
 | GET | `/api/graph` | query `at?`=ISO date, `limit?`=int | `GraphResponse` | P5 |
 | GET | `/api/attack/tactics` | – | `Tactic[]` ordered | P4 |
 | GET | `/api/attack/techniques/{id}` | – | `TechniqueDetail` | P4 |
@@ -543,7 +556,7 @@ type GeoPoint = { ioc_id: string; display: string; lat: number; lon: number;
 ### Stage list (order = canvas layout) and `data` payloads
 | stage | kind (badge) | `progress` data | `done` data |
 |---|---|---|---|
-| `ingest` | deterministic | – | `{title, source_url, published_at, chars}` |
+| `ingest` | deterministic (+ OCR) | `{image: {index, source, chars, used}}` per image | `{title, source_url, published_at, chars, images, ocr_status}` |
 | `guard` | hybrid | – | `{flags: InjectionFlag[]}` |
 | `ioc` | deterministic | – | `{iocs: IOC[]}` (incl. filtered ones) |
 | `ioc_role` | LLM | – | `{iocs: IOC[]}` (roles filled) |
@@ -556,6 +569,8 @@ type GeoPoint = { ioc_id: string; display: string; lat: number; lon: number;
 | `flow` | graph | – | `{flow: AttackFlow}` |
 | `detect` | hybrid | `{detection: Detection}` | `{count}` |
 | `memory` | graph | – | `{alerts: MemoryAlert[]}` |
+| `vulns` | deterministic (NVD + CISA KEV, cached) | – | `{vulnerabilities: VulnInfo[]}` |
+| `brief` | LLM + rules | – | `{briefing: Briefing \| null}` |
 | `export` | deterministic | – | `{formats: ["stix","navigator","sigma","flow"]}` |
 | `pipeline` | – | – | `{report_id}` (or `error` with `{message}`) |
 

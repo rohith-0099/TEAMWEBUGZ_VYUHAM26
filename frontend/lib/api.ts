@@ -9,7 +9,7 @@ import readinessMock from "@/lib/mock/readiness.json";
 import simulateMock from "@/lib/mock/simulate.json";
 import tacticsMock from "@/lib/mock/tactics.json";
 import type {
-  AnalysisListItem, EvalResponse, GeoPoint, GraphResponse, ReadinessResponse, ReportAnalysis,
+  AnalysisListItem, EvalResponse, GeoResponse, SourcesResponse, GraphResponse, ReadinessResponse, ReportAnalysis,
   SimulateResponse, Tactic, TechniqueDetail, Telemetry,
 } from "@/lib/types";
 
@@ -123,8 +123,8 @@ export async function getEval(): Promise<EvalResponse> {
   return request("/eval");
 }
 
-export async function getGeo(id: string): Promise<GeoPoint[]> {
-  if (USE_MOCKS) return mock(geoMock);
+export async function getGeo(id: string): Promise<GeoResponse> {
+  if (USE_MOCKS) return mock({ available: true, points: geoMock });
   return request(`/analyses/${id}/geo`);
 }
 
@@ -133,4 +133,8 @@ export type HealthResponse = { ok: boolean; attack_loaded: boolean; techniques: 
 export async function getHealth(): Promise<HealthResponse> {
   if (USE_MOCKS) return mock({ ok: true, attack_loaded: true, techniques: 227 });
   return request("/health");
+}
+
+export async function getSources(): Promise<SourcesResponse> {
+  return request("/sources");
 }

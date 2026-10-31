@@ -1,6 +1,9 @@
 FROM python:3.11-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
+# Tesseract for reading text in report images (OCR). Optional at runtime: ingestion continues without it.
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 # pip reads this from the environment. Override it when PyPI is slow on your network.
 ARG PIP_INDEX_URL=https://pypi.org/simple

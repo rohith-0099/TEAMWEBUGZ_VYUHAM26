@@ -6,12 +6,16 @@ Extracts defanged/refanged IOCs, normalizes, applies filters, and extracts evide
 """
 from __future__ import annotations
 
+import hashlib
 import ipaddress
 from pathlib import Path
 import re
 from urllib.parse import urlsplit
 
+import tldextract
+
 from app.models import IOC, Confidence, Evidence, IOCType
+from app.sources import source_key_for
 from app.utils.text import defang
 
 # Try importing iocsearcher Searcher (instantiated once if available)
@@ -35,6 +39,36 @@ REFERENCE_HOSTS = {
     "attack.mitre.org", "cve.mitre.org", "nvd.nist.gov", "virustotal.com",
     "github.com/mitre", "www.virustotal.com",
 }
+
+
+# The bundled Public Suffix List snapshot: no network, as this module promises.
+_suffixes = tldextract.TLDExtract(suffix_list_urls=(), cache_dir=None)
+
+# Resolver -> source key. None: the provider's page could not be confirmed (docs/DECISIONS.md).
+PUBLIC_DNS: dict[str, str | None] = {
+    "8.8.8.8": "google_public_dns", "8.8.4.4": "google_public_dns",
+    "1.1.1.1": "cloudflare_dns", "1.0.0.1": "cloudflare_dns",
+    "9.9.9.9": "quad9",
+    "208.67.222.222": "opendns",
+    "114.114.114.114": None,
+}
+
+RFC1918_NETWORKS = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")]
+RFC5737_NETWORKS = [ipaddress.ip_network(n) for n in ("192.0.2.0/24", "198.51.100.0/24", "203.0.113.0/24")]
+
+
+def _benign_hashes() -> dict[str, str | None]:
+    """Computed, so no digest can be mistyped. Only the MD5 of nothing has a published value."""
+    digests: dict[str, str | None] = {}
+    for algorithm in ("md5", "sha1", "sha256", "sha512"):
+        digests[hashlib.new(algorithm, b"").hexdigest()] = None
+        digests[hashlib.new(algorithm, b"123456").hexdigest()] = None
+    digests[hashlib.md5(b"").hexdigest()] = "rfc1321"
+    digests[hashlib.md5(b"123456").hexdigest()] = "talos_php_exploit"
+    return digests
+
+
+BENIGN_HASHES = _benign_hashes()
 
 
 def _load_benign_domains() -> set[str]:
@@ -145,6 +179,24 @@ def _is_benign_domain(domain: str, allowlist: set[str]) -> bool:
         if d.endswith("." + parent):
             return True
     return False
+
+
+def _has_public_suffix(domain: str) -> bool:
+    parts = _suffixes(domain)
+    return bool(parts.suffix and parts.domain)
+
+
+def _in_url_path(text: str, start: int) -> bool:
+    """True after a path slash, but not after the // that introduces a host."""
+    return start > 0 and text[start - 1] == "/" and text[max(0, start - 2):start] != "//"
+
+
+def _ip_source(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> str:
+    if ip.version == 4 and any(ip in n for n in RFC1918_NETWORKS):
+        return "rfc1918"
+    if ip.version == 4 and any(ip in n for n in RFC5737_NETWORKS):
+        return "rfc5737"
+    return "iana_ipv4_special"
 
 
 def _check_version_number(text: str, start: int, value: str) -> bool:
@@ -325,20 +377,18 @@ def extract_iocs(text: str, publisher_domain: str | None = None) -> list[IOC]:
         first_start = occurrences[0][0]
 
         filtered_reason: str | None = None
+        source_key: str | None = None
 
-        # Filter 1: Private or reserved IP
+        # Filter 1: Private or reserved IP, then public DNS resolvers
         if ioc_type in ("ipv4", "ipv6"):
             try:
                 ip = ipaddress.ip_address(value)
-                if (
-                    ip.is_private
-                    or ip.is_loopback
-                    or ip.is_link_local
-                    or ip.is_multicast
-                    or ip.is_reserved
-                    or ip.is_unspecified
-                ):
+                if not ip.is_global or ip.is_multicast:
                     filtered_reason = "private_or_reserved_ip"
+                    source_key = _ip_source(ip)
+                elif value in PUBLIC_DNS:
+                    filtered_reason = "public_dns"
+                    source_key = PUBLIC_DNS[value]
             except ValueError:
                 # If IPv4 failed parsing, check if it's a version number
                 if ioc_type == "ipv4":
@@ -354,10 +404,12 @@ def extract_iocs(text: str, publisher_domain: str | None = None) -> list[IOC]:
             # Invalid domain check
             parts = value.split(".")
             tld = parts[-1] if len(parts) > 1 else ""
-            if len(parts) < 2 or not tld.isalpha():
+            if len(parts) < 2 or not tld.isalpha() or not _has_public_suffix(value):
                 filtered_reason = "invalid_domain"
             elif _is_benign_domain(value, allowlist):
                 filtered_reason = "benign_domain"
+            elif all(_in_url_path(text, s) for s, _ in occurrences):
+                filtered_reason = "url_path_not_domain"
             elif tld in FILE_EXTENSIONS or value in extracted_filenames:
                 filtered_reason = "looks_like_filename"
 
@@ -372,6 +424,13 @@ def extract_iocs(text: str, publisher_domain: str | None = None) -> list[IOC]:
                     filtered_reason = "benign_domain"
             except Exception:
                 pass
+
+        if ioc_type in ("md5", "sha1", "sha256", "sha512") and value in BENIGN_HASHES:
+            filtered_reason = "known_benign_hash"
+            source_key = BENIGN_HASHES[value]
+
+        if filtered_reason and source_key is None:
+            source_key = source_key_for(filtered_reason)
 
         # Calculate evidence for up to 3 occurrences
         evidence_list: list[Evidence] = []
@@ -406,6 +465,7 @@ def extract_iocs(text: str, publisher_domain: str | None = None) -> list[IOC]:
                 confidence=Confidence(extraction=conf_val),
                 linked_techniques=[],
                 filtered_reason=filtered_reason,
+                source_key=source_key,
             )
         )
         ioc_counter += 1

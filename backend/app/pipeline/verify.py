@@ -12,31 +12,52 @@ from pydantic import BaseModel
 
 from app.attack import store
 from app.config import settings
-from app.llm import UNTRUSTED_RULE, LLMError, complete_json, wrap_report
+from app.llm import UNTRUSTED_RULE, LLMError, RequestTooLarge, complete_json, wrap_report
 from app.mocks import sample_analysis
 from app.models import IOC, Behaviour, Candidate, Confidence, Evidence, TechniqueMatch
+from app.sources import source_key_for
 from app.utils.quotes import find_quote
+from app.utils.sections import _heading_lines, in_reference_section, is_listing
 
 log = logging.getLogger(__name__)
 
 CONTEXT_CHARS = 300
 EXPLICIT_NEAR_CHARS = 500
-DESCRIPTION_CHARS = 450
+DESCRIPTION_CHARS = 300
+EXAMPLE_CHARS = 200
 EXAMPLES_PER_CANDIDATE = 1
 MAX_CANDIDATES_SENT = 6  # retrieval ranks them; explicit IDs always go in
-MAX_VERIFY_TOKENS = 1500
+BATCH_SIZE = 1           # behaviours per call. 4 was measured: fewer and worse matches, so it stays 1
+TOKENS_PER_BEHAVIOUR = 500
+BATCH_TOKEN_BUDGET = 6000  # prompt + max_tokens; the provider rejects a single request above its per-minute limit
+CHARS_PER_TOKEN = 3.5      # rough estimate, only used to pack batches
+MIN_EVIDENCE_WORDS = 4
+FRAGMENT_REASON = ("The evidence is a heading or a short phrase, such as an item in a summary list; "
+                   "it does not describe what the attacker did.")
+LISTING_REASON = ("The evidence only names the technique (a table, appendix or list); "
+                  "it does not describe what the attacker did.")
 MAX_REJECTED_PER_BEHAVIOUR = 3
 OUTSIDE_CANDIDATES_FACTOR = 0.8
 FUZZY_QUOTE_FACTOR = 0.9
 
 SYSTEM_PROMPT = f"""You verify mappings between threat-report evidence and MITRE ATT&CK v20 techniques.
-You receive one adversary behaviour, its exact evidence from the report, surrounding context, and candidate techniques
-with their OFFICIAL MITRE descriptions. Decide which candidates (0, 1 or 2) the evidence actually supports.
+You receive several numbered adversary behaviours. Each has its exact evidence from the report, surrounding context,
+and candidate techniques with their OFFICIAL MITRE descriptions. For EACH behaviour, decide which candidates
+(0, 1 or 2) its evidence actually supports, and return one result per behaviour with its behaviour_id.
 Rules:
 - Judge ONLY against the official description. Similar words are not enough; the described action must match.
+- Map what the attacker DID. If the evidence clearly states an action that a candidate's description covers,
+  accept it even when the report uses its own words or tool names (e.g. a named tool dumping LSASS memory,
+  or data sent out over an existing C2 channel).
+- Exploiting a vulnerability in an internet-facing server or web application to gain initial access is
+  T1190 (Exploit Public-Facing Application). T1210 (Exploitation of Remote Services) is exploiting a service on
+  an internal system to move laterally after access.
+- A technique ID or name written in the report is only a HINT. Never accept a match whose only evidence is a
+  table row, appendix, reference or list naming the technique; the evidence must be a sentence describing an action.
 - Choose a sub-technique only if the evidence supports that specific variant; otherwise choose the parent technique.
 - If no candidate fits, return no matches. Returning nothing is better than a wrong match.
-- evidence_quote must be copied VERBATIM from the evidence or context (shortest span that proves the match).
+- evidence_quote must be copied VERBATIM from the evidence or context: the sentence or clause that states the
+  attacker's action. Never quote a heading, a summary list item or a bare technique name.
 - confidence: 0.9-1.0 explicitly stated; 0.7-0.89 clearly implied; 0.5-0.69 plausible but indirect; below 0.5 do not return.
 - linked_ioc_ids: IDs of provided indicators that take part in this behaviour (may be empty).
 - For each rejected candidate give a short reason.
@@ -56,9 +77,14 @@ class _Rej(BaseModel):
     reason: str
 
 
-class _Out(BaseModel):
-    matches: list[_Match]
+class _Item(BaseModel):
+    behaviour_id: str
+    matches: list[_Match] = []
     rejected: list[_Rej] = []
+
+
+class _BatchOut(BaseModel):
+    results: list[_Item] = []
 
 
 def _attack_url(row: dict | None) -> str | None:
@@ -71,13 +97,13 @@ def _rejected(technique_id: str, reason: str, rationale: str, evidence: Evidence
     return TechniqueMatch(
         technique_id=technique_id, name=(row or {}).get("name") or name or "Unknown technique",
         tactics=(row or {}).get("tactics") or [], behaviour_id=behaviour_id, evidence=evidence,
-        status="rejected", reject_reason=reason, rationale=rationale,
+        status="rejected", reject_reason=reason, source_key=source_key_for(reason), rationale=rationale,
         confidence=Confidence(mapping=mapping), url=_attack_url(row),
     )
 
 
 def _judge(match: _Match, text: str, behaviour: Behaviour, behaviour_id: str | None,
-           candidate_ids: set[str], ioc_ids: set[str]) -> TechniqueMatch:
+           candidate_ids: set[str], ioc_ids: set[str], ctx: "_Context") -> TechniqueMatch:
     """Applies the hard rules to one LLM match. Never trusts its ID, quote or score."""
     tid = match.technique_id.strip().upper()
     confidence = max(0.0, min(1.0, match.confidence))
@@ -92,6 +118,12 @@ def _judge(match: _Match, text: str, behaviour: Behaviour, behaviour_id: str | N
         return _rejected(tid, "quote_not_in_source",
                          f'Model quoted "{match.evidence_quote[:200]}", which is not in the report.',
                          None, behaviour_id, mapping=confidence)
+
+    # Evidence must describe an action, not list technique names (CISA ATT&CK mapping best practices).
+    if is_listing(evidence.quote, ctx.names) or in_reference_section(text, evidence.start, ctx.headings):
+        return _rejected(tid, "verifier_mismatch", LISTING_REASON, evidence, behaviour_id, mapping=confidence)
+    if len(evidence.quote.split()) < MIN_EVIDENCE_WORDS or ctx.in_heading(evidence):
+        return _rejected(tid, "verifier_mismatch", FRAGMENT_REASON, evidence, behaviour_id, mapping=confidence)
 
     rationale = match.rationale
     if tid not in candidate_ids:
@@ -121,36 +153,54 @@ def _candidate_block(c: Candidate) -> str | None:
     examples = store.get_procedure_examples(c.technique_id, EXAMPLES_PER_CANDIDATE)
     lines = [f"{c.technique_id} {row.get('name', c.name)}", f"Tactics: {tactics}",
              f"Description: {(row.get('description') or '')[:DESCRIPTION_CHARS]}"]
-    lines += [f"Example: {e}" for e in examples]
+    lines += [f"Example: {e[:EXAMPLE_CHARS]}" for e in examples]
     return "\n".join(lines)
 
 
-def _user_prompt(text: str, behaviour: Behaviour, blocks: list[str], iocs: list[IOC]) -> str:
-    start = max(0, behaviour.evidence.start - CONTEXT_CHARS)
-    end = behaviour.evidence.end + CONTEXT_CHARS
+class _Context:
+    """Per-report data the hard checks need, computed once."""
+    def __init__(self, text: str):
+        self.headings = _heading_lines(text)
+        self.names = store.technique_names()
+        self.heading_spans = []
+        for offset, _ in self.headings:
+            end = text.find("\n", offset)
+            self.heading_spans.append((offset, len(text) if end < 0 else end))
+
+    def in_heading(self, evidence: Evidence) -> bool:
+        return any(start <= evidence.start and evidence.end <= end for start, end in self.heading_spans)
+
+
+class _Job:
+    """One behaviour to verify, with its candidates ranked and rendered."""
+    def __init__(self, behaviour: Behaviour, behaviour_id: str | None, candidates: list[Candidate]):
+        self.behaviour = behaviour
+        self.behaviour_id = behaviour_id
+        self.ordered = sorted(candidates, key=lambda c: c.score, reverse=True)[:MAX_CANDIDATES_SENT]
+        self.blocks = [b for b in map(_candidate_block, self.ordered) if b]
+
+
+def _behaviour_section(text: str, job: _Job, iocs: list[IOC]) -> str:
+    b = job.behaviour
+    start = max(0, b.evidence.start - CONTEXT_CHARS)
+    end = b.evidence.end + CONTEXT_CHARS
     nearby = [i for i in iocs if not i.filtered_reason
               and any(start <= e.start < end for e in i.evidence)]
     indicators = "\n".join(f"{i.id}: {i.display} ({i.type})" for i in nearby) or "none"
-    return (f"Behaviour: {behaviour.summary}\n\n"
-            f"Evidence and context:\n{wrap_report(behaviour.evidence.quote)}\n"
+    return (f"### behaviour_id: {b.id}\n"
+            f"Behaviour: {b.summary}\n\n"
+            f"Evidence and context:\n{wrap_report(b.evidence.quote)}\n"
             f"{wrap_report(text[start:end])}\n\n"
             f"Indicators in context:\n{indicators}\n\n"
-            "Candidates:\n" + "\n\n".join(blocks))
+            "Candidates:\n" + "\n\n".join(job.blocks))
 
 
-async def _verify_behaviour(text: str, behaviour: Behaviour, behaviour_id: str | None,
-                            candidates: list[Candidate], iocs: list[IOC],
-                            emit: Callable[[TechniqueMatch], Awaitable[None]]) -> None:
-    ordered = sorted(candidates, key=lambda c: c.score, reverse=True)[:MAX_CANDIDATES_SENT]
-    blocks = [b for b in map(_candidate_block, ordered) if b]
-    if not blocks:
-        return
-    out = await complete_json(SYSTEM_PROMPT, _user_prompt(text, behaviour, blocks, iocs), _Out,
-                              model="verify", max_tokens=MAX_VERIFY_TOKENS)
-
+async def _apply(text: str, job: _Job, out: _Item, iocs: list[IOC], ctx: _Context,
+                 emit: Callable[[TechniqueMatch], Awaitable[None]]) -> None:
+    behaviour, behaviour_id, ordered = job.behaviour, job.behaviour_id, job.ordered
     candidate_ids = {c.technique_id for c in ordered}
     ioc_ids = {i.id for i in iocs}
-    judged = [_judge(m, text, behaviour, behaviour_id, candidate_ids, ioc_ids) for m in out.matches]
+    judged = [_judge(m, text, behaviour, behaviour_id, candidate_ids, ioc_ids, ctx) for m in out.matches]
     accepted: dict[str, TechniqueMatch] = {}
     for t in judged:
         if t.status == "accepted":
@@ -174,6 +224,73 @@ async def _verify_behaviour(text: str, behaviour: Behaviour, behaviour_id: str |
         seen.add(r.technique_id)
         await emit(_rejected(r.technique_id, "verifier_mismatch", r.reason, behaviour.evidence, behaviour_id,
                              name=ordered[by_score[r.technique_id]].name))
+
+
+def _estimate_tokens(text: str, job: _Job, iocs: list[IOC]) -> int:
+    return int(len(_behaviour_section(text, job, iocs)) / CHARS_PER_TOKEN) + TOKENS_PER_BEHAVIOUR
+
+
+def _pack(text: str, jobs: list[_Job], iocs: list[IOC]) -> list[list[_Job]]:
+    """Neighbouring behaviours together, up to BATCH_SIZE and the token budget."""
+    fixed = int(len(SYSTEM_PROMPT) / CHARS_PER_TOKEN) + 300 + 400  # system, slack, schema
+    batches: list[list[_Job]] = []
+    current: list[_Job] = []
+    used = fixed
+    for job in jobs:
+        cost = _estimate_tokens(text, job, iocs)
+        if current and (len(current) == BATCH_SIZE or used + cost > BATCH_TOKEN_BUDGET):
+            batches.append(current)
+            current, used = [], fixed
+        current.append(job)
+        used += cost
+    if current:
+        batches.append(current)
+    return batches
+
+
+async def _verify_batch(text: str, jobs: list[_Job], iocs: list[IOC], ctx: _Context,
+                        emit: Callable[[TechniqueMatch], Awaitable[None]]) -> None:
+    user = "\n\n".join(_behaviour_section(text, j, iocs) for j in jobs)
+    try:
+        out = await complete_json(SYSTEM_PROMPT, user, _BatchOut, model="verify",
+                                  max_tokens=TOKENS_PER_BEHAVIOUR * len(jobs) + 300)
+    except RequestTooLarge:
+        if len(jobs) == 1:
+            raise
+        half = len(jobs) // 2  # retry as two smaller requests instead of losing every behaviour in it
+        await asyncio.gather(_verify_batch(text, jobs[:half], iocs, ctx, emit),
+                             _verify_batch(text, jobs[half:], iocs, ctx, emit))
+        return
+    by_id = {j.behaviour.id: j for j in jobs}
+    answered = set()
+    for item in out.results:
+        job = by_id.get(item.behaviour_id.strip())
+        if job is None or item.behaviour_id in answered:
+            continue  # unknown or repeated id: never guess which behaviour the model meant
+        answered.add(item.behaviour_id)
+        await _apply(text, job, item, iocs, ctx, emit)
+    if missing := set(by_id) - answered:
+        log.warning("verifier returned no result for %s", sorted(missing))
+
+
+def enforce_golden_rule(analysis) -> int:
+    """Last line of defence: an accepted technique must exist in v20 and its quote must sit at its
+    offsets in the report. Anything else is demoted to rejected. Returns how many were demoted."""
+    demoted = 0
+    for t in analysis.techniques:
+        if t.status != "accepted":
+            continue
+        ev = t.evidence
+        if not store.technique_exists(t.technique_id):
+            reason = "id_not_in_v20"
+        elif ev is None or analysis.text[ev.start:ev.end] != ev.quote:
+            reason = "quote_not_in_source"
+        else:
+            continue
+        t.status, t.reject_reason, t.source_key = "rejected", reason, source_key_for(reason)
+        t.rationale = f"Failed the final check: {reason}. {t.rationale}".strip()
+        demoted += 1
+    return demoted
 
 
 async def _mock_results(text: str, on_result: Callable[[TechniqueMatch], Awaitable[None]] | None,
@@ -202,7 +319,7 @@ async def verify_all(text: str, behaviours: list[Behaviour], candidates: dict[st
                      on_result: Callable[[TechniqueMatch], Awaitable[None]] | None = None,
                      ) -> list[TechniqueMatch]:
     """Accepted and rejected matches; on_result fires for each so the UI streams both."""
-    if not settings.llm_api_key:
+    if not settings.llm_enabled:
         return await _mock_results(text, on_result)
 
     results: list[TechniqueMatch] = []
@@ -228,7 +345,11 @@ async def verify_all(text: str, behaviours: list[Behaviour], candidates: dict[st
         else:
             usable[tid] = evidence
 
-    tasks = []
+    ctx = _Context(text)
+    # A table/appendix row only names the technique: it is neither a hint nor evidence.
+    usable = {tid: ev for tid, ev in usable.items()
+              if not is_listing(ev.quote, ctx.names) and not in_reference_section(text, ev.start, ctx.headings)}
+    jobs: list[_Job] = []
     placed: set[str] = set()
     for b in behaviours:
         pool = list(candidates.get(b.id, []))
@@ -239,14 +360,17 @@ async def verify_all(text: str, behaviours: list[Behaviour], candidates: dict[st
                 if tid not in known:
                     name = (store.get_technique(tid) or {}).get("name", tid)
                     pool.append(Candidate(technique_id=tid, name=name, score=1.0, source="explicit_id"))
-        tasks.append(_verify_behaviour(text, b, b.id, pool, iocs, emit))
+        jobs.append(_Job(b, b.id, pool))
 
     for tid, evidence in usable.items():
-        if tid not in placed:  # no nearby behaviour: its sentence is the evidence
-            name = (store.get_technique(tid) or {}).get("name", tid)
-            sentence = Behaviour(id=f"explicit-{tid}", summary=f"The report names {tid}", evidence=evidence)
-            pool = [Candidate(technique_id=tid, name=name, score=1.0, source="explicit_id")]
-            tasks.append(_verify_behaviour(text, sentence, None, pool, iocs, emit))
+        if tid in placed:  # no nearby behaviour: its sentence is the evidence
+            continue
+        name = (store.get_technique(tid) or {}).get("name", tid)
+        sentence = Behaviour(id=f"explicit-{tid}", summary=f"The report names {tid}", evidence=evidence)
+        jobs.append(_Job(sentence, None, [Candidate(technique_id=tid, name=name, score=1.0, source="explicit_id")]))
+
+    jobs = [j for j in jobs if j.blocks]
+    tasks = [_verify_batch(text, batch, iocs, ctx, emit) for batch in _pack(text, jobs, iocs)]
 
     outcomes = await asyncio.gather(*tasks, return_exceptions=True)
     failures = [o for o in outcomes if isinstance(o, BaseException)]

@@ -40,6 +40,8 @@ class IngestResult(BaseModel):
     text: str                      # normalize_text(cleaned)
     publisher_domain: str | None   # e.g. "cisa.gov", used by the IOC allowlist
     references: list[str]          # link targets removed from markdown
+    images: list[dict] = []        # {index, source, chars, used} per image considered for OCR
+    ocr_status: str | None = None  # "ok" | "no_images" | "unavailable: <reason>"
 
 
 def _extract_publisher_domain(url: str) -> str | None:
@@ -132,6 +134,8 @@ def _scrape_with_firecrawl(url: str, api_key: str) -> tuple[str, dict]:
         doc = fc.scrape(url, formats=["markdown"])
         md = getattr(doc, "markdown", None) or (doc.get("markdown") if isinstance(doc, dict) else "")
         meta = getattr(doc, "metadata", None) or (doc.get("metadata") if isinstance(doc, dict) else {})
+        if hasattr(meta, "model_dump"):  # SDK v2 returns a pydantic model, the rest of ingest expects a dict
+            meta = {**meta.model_dump(exclude_none=True), **meta.model_dump(by_alias=True, exclude_none=True)}
         return md or "", meta or {}
     except ImportError:
         pass
@@ -203,9 +207,48 @@ def _parse_iso_date(date_str: str | None) -> datetime | None:
         return None
 
 
+async def _read_images(url: str | None, pdf_bytes: bytes | None, markdown: str, cleaned: str,
+                       on_image) -> tuple[str, list[dict], str | None]:
+    """OCR blocks to append, the image list, and the OCR status. Never raises."""
+    from app.pipeline import ocr
+    from app.pipeline.ioc import extract_iocs
+
+    try:
+        if pdf_bytes:
+            found = await asyncio.to_thread(ocr.ocr_pdf, pdf_bytes)
+            sources = [f.source if f else "PDF image" for f in found]
+        elif url:
+            # Never fetch anything the report lists as an indicator.
+            iocs = extract_iocs(normalize_text(cleaned))
+            values = {i.value for i in iocs} | {urlsplit(i.value).hostname or "" for i in iocs if i.type == "url"}
+            urls = ocr.image_urls(markdown, url, values)
+            if not urls:
+                return "", [], "no_images"
+            found = await ocr.ocr_urls(urls)
+            sources = urls
+        else:
+            return "", [], None
+    except ocr.OCRUnavailable as exc:
+        return "", [], f"unavailable: {exc}"
+    except Exception as exc:  # OCR must never break ingestion
+        return "", [], f"unavailable: {exc}"
+
+    images, used = [], []
+    for index, (source, item) in enumerate(zip(sources, found), start=1):
+        info = {"index": index, "source": item.source if item else source,
+                "chars": len(item.text) if item else 0, "used": item is not None}
+        images.append(info)
+        if item:
+            item.index = index
+            used.append(item)
+        if on_image:
+            await on_image(info)
+    return ocr.blocks(used), images, ("ok" if images else "no_images")
+
+
 async def ingest(url: str | None = None, text: str | None = None,
                  pdf_bytes: bytes | None = None, filename: str | None = None,
-                 title: str | None = None) -> IngestResult:
+                 title: str | None = None, on_image=None) -> IngestResult:
     """Ingest threat report from URL, raw text, or PDF upload.
 
     Returns IngestResult with raw_text (for firewall) and normalized text (for evidence offsets).
@@ -263,8 +306,13 @@ async def ingest(url: str | None = None, text: str | None = None,
     cleaned_text, refs = _clean_markdown(raw_content)
     references.extend(refs)
 
+    # Text read from images is appended BEFORE normalisation, in labelled blocks, so every
+    # evidence offset stays valid and quotes from images are visibly marked.
+    image_blocks, images, ocr_status = await _read_images(url if not text else None, pdf_bytes,
+                                                          raw_content, cleaned_text, on_image)
+
     # Normalize canonical text (ALL evidence offsets point into this string)
-    normalized = normalize_text(cleaned_text)
+    normalized = normalize_text(cleaned_text + image_blocks)
 
     # Validate minimal length
     if len(normalized) < 200:
@@ -281,4 +329,6 @@ async def ingest(url: str | None = None, text: str | None = None,
         text=normalized,
         publisher_domain=publisher_domain,
         references=references,
+        images=images,
+        ocr_status=ocr_status,
     )

@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Ridgeline } from "@/components/charts";
-import { getEval } from "@/lib/api";
+import { ApiError, getEval } from "@/lib/api";
 import type { EvalResponse } from "@/lib/types";
 
 // ─── colours ──────────────────────────────────────────────────────────────────
@@ -148,15 +148,27 @@ function ReportRow({ report }: { report: EvalResponse["per_report"][number] }) {
           transition: "background 0.15s",
         }}
       >
-        <a
-          href={report.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          style={{ fontSize: 12, color: C.observed, flex: 1, wordBreak: "break-all" }}
-        >
-          {report.title}
-        </a>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+          {report.url ? (
+            <a
+              href={report.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 12, color: C.observed, wordBreak: "break-word" }}
+            >
+              {report.title}
+            </a>
+          ) : (
+            <span style={{ fontSize: 12, color: C.text }}>{report.title}</span>
+          )}
+          <span style={{ fontSize: 10, color: C.muted }}>
+            Answers from: {report.answer_key ?? "ATT&CK technique tables in the advisory"}
+            {report.truth_count !== undefined && ` (${report.truth_count} techniques)`}
+            {report.remapped && report.remapped.length > 0 && ` · mapped to v20: ${report.remapped.join(", ")}`}
+            {report.dropped && report.dropped.length > 0 && ` · dropped (not in v20): ${report.dropped.join(", ")}`}
+          </span>
+        </div>
         {/* baseline */}
         <div style={{ display: "flex", gap: 4, minWidth: 100 }}>
           <Chip label={`TP:${tpB}`} color={C.success} />
@@ -295,6 +307,7 @@ export function ScoreboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMock, setIsMock] = useState(false);
+  const [notRun, setNotRun] = useState(false);
 
   useEffect(() => {
     getEval()
@@ -306,7 +319,8 @@ export function ScoreboardPage() {
         setLoading(false);
       })
       .catch((e) => {
-        setError(String(e));
+        if (e instanceof ApiError && e.status === 404) setNotRun(true);
+        setError(e instanceof Error ? e.message : String(e));
         setLoading(false);
       });
   }, []);
@@ -341,8 +355,9 @@ export function ScoreboardPage() {
         }}
       >
         <h1 className="console-title">Scoreboard</h1>
-        No evaluation has been run yet.
-        {!evalData && (
+        {notRun ? "No evaluation has been run yet. These numbers are only ever shown from a real run." :
+          "Couldn't load the scoreboard. Check that the backend is running, then reload this page."}
+        {notRun && (
           <div style={{ color: C.muted, fontSize: 12, marginTop: 8 }}>
             Run{" "}
             <code
@@ -441,9 +456,9 @@ export function ScoreboardPage() {
         }}
       >
         {[
-          { label: "Ground truth = ATT&CK tables published in CISA advisories" },
-          { label: "Precision = how many claimed techniques were right" },
-          { label: "Recall = how many real techniques we found" },
+          { label: "Answer key = the ATT&CK technique tables each advisory publishes (links below)" },
+          { label: "Precision = of the techniques a system claimed, the share that are in the answer key" },
+          { label: "Recall = of the techniques in the answer key, the share the system found" },
         ].map((item) => (
           <div
             key={item.label}
@@ -463,6 +478,35 @@ export function ScoreboardPage() {
           </div>
         ))}
       </div>
+
+      {/* how it was measured */}
+      <section style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8,
+                        padding: "12px 16px", marginBottom: 24, fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
+        <div style={{ color: C.text, fontWeight: 600, marginBottom: 4 }}>How this was measured</div>
+        {evalData.leakage_rule && <p><b>No peeking:</b> {evalData.leakage_rule}</p>}
+        {evalData.baseline_method && <p><b>Plain LLM:</b> {evalData.baseline_method}</p>}
+        {evalData.trinetra_method && <p><b>TRINETRA:</b> {evalData.trinetra_method}</p>}
+        {evalData.models && (
+          <p><b>Models:</b> extract slot (behaviours, Sigma rules, baseline) = <code>{evalData.models.extract}</code>;
+            verify slot (verifier, IOC roles, guard, briefing) = <code>{evalData.models.verify}</code>.</p>
+        )}
+        {evalData.skipped && evalData.skipped.length > 0 && (
+          <div style={{ marginTop: 6, color: C.warning }}>
+            <b>Not scored ({evalData.skipped.length}):</b> these reports didn&apos;t fit the LLM providers&apos;
+            quotas and are left out of every number above.
+            <ul style={{ margin: "4px 0 0 16px", listStyle: "disc" }}>
+              {evalData.skipped.map((s) => (
+                <li key={s.report_id}>
+                  {s.url ? <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: C.observed }}>{s.title}</a> : s.title}
+                  {" "}— {s.reason}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <p>Scores are micro-averaged over every technique in every scored report. &quot;Parent F1&quot; counts a
+          sub-technique as its parent (T1059.001 → T1059). Run on {new Date(evalData.ran_at).toLocaleString()}.</p>
+      </section>
 
       {/* score distribution */}
       <section className="mb-6 flex flex-col gap-3 rounded-[20px] border bg-card p-4">

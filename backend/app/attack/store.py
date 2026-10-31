@@ -281,6 +281,18 @@ def all_technique_ids() -> set[str]:
     return set(_TECHNIQUES.keys())
 
 
+def technique_names() -> set[str]:
+    """Every technique name, plus "Parent: Sub-technique" as ATT&CK tables write them."""
+    _ensure_initialized()
+    names = set()
+    for t in _TECHNIQUES.values():
+        names.add(t["name"])
+        parent = _TECHNIQUES.get(t.get("parent_id") or "")
+        if parent and parent is not t:
+            names.add(f"{parent['name']}: {t['name']}")
+    return names
+
+
 def get_procedure_examples(technique_id: str, n: int = 2) -> list[str]:
     """Short procedure examples for verifier context."""
     _ensure_initialized()

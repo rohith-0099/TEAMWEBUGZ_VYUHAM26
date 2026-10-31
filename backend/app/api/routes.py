@@ -22,6 +22,8 @@ from app.pipeline.geo import geo_points
 from app.pipeline.memory import get_graph
 from app.pipeline.runner import start_analysis
 from app.pipeline.simulate import simulate
+from app.pipeline.verify import enforce_golden_rule
+from app.sources import GLOSSARY, RULES, SOURCES
 
 router = APIRouter()
 
@@ -47,6 +49,7 @@ async def _get_or_404(analysis_id: str) -> ReportAnalysis:
     analysis = await asyncio.to_thread(db.get_analysis, analysis_id)
     if analysis is None:
         raise HTTPException(404, f"Analysis {analysis_id} not found")
+    enforce_golden_rule(analysis)  # also covers analyses stored by older code
     return analysis
 
 
@@ -150,6 +153,11 @@ async def geo(analysis_id: str):
 @router.get("/graph")
 async def graph(at: datetime | None = None, limit: int = 2000):
     return await asyncio.to_thread(get_graph, at, limit)
+
+
+@router.get("/sources")
+async def sources():
+    return {"sources": SOURCES, "rules": RULES, "glossary": GLOSSARY}
 
 
 @router.get("/attack/tactics")

@@ -135,7 +135,7 @@ async def build_rules(analysis: ReportAnalysis, technique_id: str, detection: De
     linked = [i for i in analysis.iocs if not i.filtered_reason and technique_id in i.linked_techniques]
     rules = [_ioc_rule(analysis, technique_id, label, logsource, selection)
              for label, logsource, selection in _ioc_selections(linked)]
-    if (settings.llm_api_key and technique_id in _eligible_for_behaviour_rule(analysis)
+    if (settings.llm_enabled and technique_id in _eligible_for_behaviour_rule(analysis)
             and _has_host_analytic(detection)):
         rule = await _behaviour_rule(analysis, technique_id, detection)
         if rule:

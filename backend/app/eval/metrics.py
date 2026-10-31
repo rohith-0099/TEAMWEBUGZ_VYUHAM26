@@ -1,6 +1,13 @@
 """Scoring for the scoreboard. Owner: Lead. See team/05_LEAD_ARCHITECT.md section 11."""
 import re
 
+from app.utils.sections import reference_sections
+
+LEAKAGE_RULE = ("Before scoring, every ATT&CK table, appendix and reference section is cut from the report, "
+                "every line that names a technique or tactic ID (T1234, T1234.001, TA0001) and is short enough "
+                "to be a table row is dropped, and every remaining ID is deleted. Otherwise the report's own "
+                "answers would be graded.")
+
 TECHNIQUE_ID = re.compile(r"\bT\d{4}(?:\.\d{3})?\b")
 TACTIC_ID = re.compile(r"\bTA\d{4}\b")
 MAX_TABLE_LINE_CHARS = 200
@@ -11,6 +18,8 @@ def strip_leakage(text: str) -> str:
 
     Without this, the eval would grade the report against itself.
     """
+    for start, end in reversed(reference_sections(text)):
+        text = text[:start] + text[end:]
     kept = []
     for line in text.split("\n"):
         has_id = TECHNIQUE_ID.search(line) or TACTIC_ID.search(line)

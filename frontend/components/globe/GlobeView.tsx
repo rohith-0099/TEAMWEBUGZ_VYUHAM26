@@ -48,8 +48,8 @@ export function GlobeView({ analysisId }: { analysisId: string }) {
 
   useEffect(() => {
     getGeo(analysisId)
-      .then((pts) => {
-        setPoints(pts);
+      .then((geo) => {
+        setPoints(geo.points);
         setLoading(false);
       })
       .catch(() => setLoading(false));

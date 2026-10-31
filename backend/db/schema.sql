@@ -104,3 +104,10 @@ CREATE TABLE IF NOT EXISTS llm_cache (
   response    JSONB NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- external lookups (NVD, CISA KEV), cached so a demo works offline and we respect rate limits
+CREATE TABLE IF NOT EXISTS ext_cache (
+  key         TEXT PRIMARY KEY,           -- "kev:feed" | "nvd:CVE-2024-4577"
+  payload     JSONB NOT NULL,
+  fetched_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
